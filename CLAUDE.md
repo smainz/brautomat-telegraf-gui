@@ -1,0 +1,108 @@
+# CLAUDE.md
+
+Kontext für Claude Code zu diesem Projekt. Bitte vor größeren Änderungen lesen.
+
+## Was ist das
+
+Ein minimaler Wails-v2-Desktop-Wrapper (Go-Backend, schlichtes HTML/JS-Frontend
+ohne Build-Tool) für Telegraf. Zweck: Ein Braureaktor stellt unter
+`http://<host>/telemetry` alle paar Sekunden einen JSON-Messpunkt bereit.
+Der Wrapper hat ein Formular, aus dem eine Telegraf-Config generiert wird,
+und startet/stoppt den Telegraf-Prozess als Kindprozess. Telegraf selbst
+schreibt die Messdaten dann wahlweise nach CSV, InfluxDB v2, PostgreSQL
+und/oder MariaDB/MySQL – je nachdem, welche Ziele im Formular aktiviert sind.
+
+Zielplattformen: Linux, macOS, Windows – nichts plattformspezifisches
+außer den beiden Dateien in `internal/process/` (siehe unten) und der
+mitgelieferten `telegraf`-Binary in `bin/`.
+
+## Architektur (wichtig für Änderungen)
+
+```
+main.go                    Flag-Parsing (--templates-dir), embed der frontend/-Assets, wails.Run()
+app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults
+internal/config/
+  config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
+  templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
+  templates/*.tmpl           Die 5 eingebetteten Standard-Templates (text/template-Syntax)
+  generator.go               Rendert Templates -> telegraf.conf + telegraf.d/outputs-*.conf
+  persistence.go             DefaultConfigPath() (~/.brautomat-telegraf-gui/config.json) + Save()/Load() als JSON
+internal/process/
+  runner.go                  Plattformneutrale Prozesssteuerung (Start/Stop/Log-Streaming)
+  process_unix.go             Prozessgruppen + SIGTERM/SIGKILL (build tag: !windows)
+  process_windows.go          cmd.Process.Kill() (build tag: windows)
+frontend/
+  index.html + src/main.js    Formular + Log-Fenster, ruft generierte wailsjs-Bindings auf
+bin/                          Hier liegt (nach Download) die telegraf-Binary pro Zielplattform
+```
+
+**Datenfluss beim Klick auf "Start":**
+1. Frontend sammelt Formularwerte in ein `Config`-Objekt (siehe `collectConfig()` in `main.js`)
+2. `StartTelegraf(cfg)` in `app.go` wird aufgerufen (Wails-Binding)
+3. `config.GetTemplatesFS()` liefert entweder die eingebetteten Templates oder das per `--templates-dir` angegebene Verzeichnis
+4. `config.Generate()` rendert `telegraf.conf` + je aktiviertem Ziel eine Datei unter `telegraf.d/`
+5. `process.Runner.Start()` startet die `telegraf`-Binary mit `--config` und `--config-directory`
+6. stdout/stderr werden zeilenweise als `telegraf:log`-Event ans Frontend gestreamt
+
+**Wichtig:** Deaktivierte Ziele werden vor dem Rendern explizit aus `telegraf.d/`
+gelöscht (siehe `Generate()` in `generator.go`), da Telegraf jede `.conf`-Datei
+im Verzeichnis liest – sonst würde ein zuvor aktiviertes Ziel weiterlaufen,
+obwohl der Benutzer es im Formular abgewählt hat.
+
+## Build & Test
+
+```bash
+go mod tidy          # Abhängigkeiten holen (braucht Internet)
+wails dev            # Live-Reload für Entwicklung
+wails build           # Produktions-Binary bauen (Wails-CLI muss installiert sein)
+```
+
+Wails-CLI installieren, falls nicht vorhanden:
+```bash
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
+```
+
+Für einen lauffähigen Build muss vorher eine passende `telegraf`- bzw.
+`telegraf.exe`-Binary unter `bin/` liegen (siehe `bin/README.md`).
+Offizielle Downloads: https://www.influxdata.com/downloads/
+
+Es gibt aktuell keine automatisierten Tests. Falls welche ergänzt werden:
+`internal/config` (Template-Rendering) ist reines Go ohne Wails-Abhängigkeit
+und lässt sich problemlos mit `go test` isoliert testen – das wäre der
+sinnvollste Einstiegspunkt.
+
+## Konventionen / worauf beim Ändern zu achten ist
+
+- **Neues Ausgabeziel hinzufügen** (z. B. MQTT): 
+  1. Neues Template unter `internal/config/templates/outputs-<name>.conf.tmpl` anlegen
+  2. Passendes Feld in `Config` (config.go) ergänzen (JSON-Tag beachten)
+  3. Eintrag in der `targets`-Liste in `generator.go` (`Generate()`) ergänzen
+  4. Formular-Fieldset in `frontend/index.html` + `collectConfig()`/`applyDefaults()` in `main.js` ergänzen
+  5. `requiredTemplateFiles` in `templates.go` erweitern, damit `--templates-dir`-Validierung greift
+
+- **Templates sind normale `text/template`-Dateien** mit Zugriff auf alle
+  Felder von `config.Config` (z. B. `{{.InfluxDB.Bucket}}`). Nicht mit
+  Wails-eigenen Template-Mechanismen verwechseln – das ist reines Go stdlib.
+
+- **Plattformspezifischer Code gehört ausschließlich** in
+  `process_unix.go` / `process_windows.go` (per Build-Tag getrennt). Bitte
+  keine `runtime.GOOS`-Verzweigungen in `runner.go` einbauen, das würde
+  die saubere Trennung aufweichen.
+
+- **Kein Frontend-Build-Tool** (bewusst kein Vite/Webpack/npm-Toolchain).
+  Reines HTML/JS/CSS unter `frontend/`. Die `wailsjs/`-Bindings werden von
+  `wails build`/`wails dev` automatisch generiert – vor dem ersten Build
+  existieren sie noch nicht, das ist kein Fehler.
+
+- **Zugangsdaten** landen aktuell im Klartext in der generierten Config im
+  temporären Arbeitsverzeichnis (`os.MkdirTemp`, wird beim Beenden gelöscht,
+  siehe `shutdown()` in `app.go`) **und** in der persistierten
+  `~/.brautomat-telegraf-gui/config.json` (0600-Rechte, siehe
+  `persistence.go`). Bei Änderungen an diesem Bereich die
+  Sicherheitshinweise in `README.md` beachten (Secret-Store, OS-Keychain).
+
+## Nicht tun
+
+- Keine Business-Logik in `main.go` – das bleibt reines Wiring (Flags, Embed, `wails.Run`).
+- Kein `localStorage`/`sessionStorage` im Frontend (in Wails-Webviews nicht zuverlässig nutzbar) – Zustand lebt im DOM bzw. wird bei Bedarf über `GetDefaults()`/Backend gehalten.
+- `internal/config` und `internal/process` sollten nicht von Wails-spezifischen Paketen abhängen – das hält sie unabhängig testbar und wiederverwendbar (z. B. für eine spätere CLI-only-Variante ohne GUI).
