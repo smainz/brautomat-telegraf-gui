@@ -1,0 +1,4 @@
+[[outputs.sql]]
+  driver = "mysql"
+  data_source_name = "{{.MySQL.User}}:{{.MySQL.Password}}@tcp({{.MySQL.Host}}:{{.MySQL.Port}})/{{.MySQL.Database}}"
+  table_template = "CREATE TABLE {TABLE}({COLUMNS})"

@@ -1,0 +1,14 @@
+[agent]
+  interval = "{{.Interval}}"
+  round_interval = true
+  flush_interval = "{{.Interval}}"
+
+[[inputs.http]]
+  urls = ["{{.DeviceURL}}/telemetry"]
+  method = "GET"
+  data_format = "json"
+  json_time_key = "t"
+  json_time_format = "unix"
+  tag_keys = ["mode", "stepName"]
+  timeout = "5s"
+  interval = "{{.Interval}}"

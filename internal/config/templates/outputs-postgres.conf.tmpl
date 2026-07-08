@@ -1,0 +1,4 @@
+[[outputs.sql]]
+  driver = "pgx"
+  data_source_name = "postgres://{{.Postgres.User}}:{{.Postgres.Password}}@{{.Postgres.Host}}:{{.Postgres.Port}}/{{.Postgres.Database}}"
+  table_template = "CREATE TABLE {TABLE}({COLUMNS})"

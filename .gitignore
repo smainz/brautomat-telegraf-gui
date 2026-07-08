@@ -1,0 +1,5 @@
+build/
+frontend/wailsjs/
+bin/telegraf
+bin/telegraf.exe
+*.log
