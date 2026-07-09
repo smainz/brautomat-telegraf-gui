@@ -175,6 +175,32 @@ func (a *App) ChooseTemplatesDir() (string, error) {
 	})
 }
 
+// ChooseSaveLogPath öffnet einen nativen "Speichern unter"-Dialog für die
+// Ausgabe des Log-Fensters. Bricht der Benutzer ab, wird ein leerer
+// String ohne Fehler zurückgegeben.
+func (a *App) ChooseSaveLogPath() (string, error) {
+	return runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Ausgabe speichern unter",
+		DefaultFilename: "brautomat-telegraf.log",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Log-Dateien (*.log)", Pattern: "*.log"},
+			{DisplayName: "Textdateien (*.txt)", Pattern: "*.txt"},
+			{DisplayName: "Alle Dateien (*.*)", Pattern: "*.*"},
+		},
+	})
+}
+
+// SaveLog schreibt content (den aktuellen Inhalt des Ausgabefensters) als
+// reinen Text nach path. Das Frontend übergibt den Text, da das
+// Log-Fenster rein clientseitig geführt wird und dem Backend nicht
+// bekannt ist.
+func (a *App) SaveLog(content, path string) error {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		return fmt.Errorf("Ausgabe konnte nicht gespeichert werden: %w", err)
+	}
+	return nil
+}
+
 // StartTelegraf generiert die Telegraf-Config aus den Formulardaten und
 // startet den telegraf-Prozess. Ausgabezeilen werden per Event
 // "telegraf:log" an das Frontend gestreamt, Statuswechsel per

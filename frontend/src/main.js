@@ -12,6 +12,8 @@ import {
   ChooseSaveConfigPath,
   ChooseOpenConfigPath,
   ChooseTemplatesDir,
+  ChooseSaveLogPath,
+  SaveLog,
   GetDefaultConfigPath,
 } from '../wailsjs/go/main/App.js';
 import { EventsOn } from '../wailsjs/runtime/runtime.js';
@@ -244,6 +246,21 @@ window.addEventListener('DOMContentLoaded', async () => {
       appendLog('[Config] geladen aus ' + chosen);
     } catch (err) {
       appendLog('[Fehler beim Laden] ' + err);
+    }
+  });
+
+  $('clearLogBtn').addEventListener('click', () => {
+    $('log').textContent = '';
+  });
+
+  $('saveLogBtn').addEventListener('click', async () => {
+    try {
+      const chosen = await ChooseSaveLogPath();
+      if (!chosen) return; // Dialog abgebrochen
+      await SaveLog($('log').textContent, chosen);
+      appendLog('[Log] gespeichert unter ' + chosen);
+    } catch (err) {
+      appendLog('[Fehler beim Speichern der Ausgabe] ' + err);
     }
   });
 });

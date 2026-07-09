@@ -1,6 +1,4 @@
 # ToDo
-- Füge einen Button ein, mit dem man den Inhalt des Ausgabefensters löschen kann
-- Füge einen Button ein, mit de man den Inhalt des Ausgabefensters speichern kann
 
 - Schreibe einen einfachen Mock-Server, der in der Entwicklung genutzt werden kann,
   um die Daten abzugragen. Timestamp soll sich hochzählen, einige Werte sich verändern. Die genaue Systematik ist dabei irrelevant.
@@ -21,3 +19,5 @@
 - Ergänze eine Checkbox: "Passwörter speichern". Ist diese Checkbox gesetzt, dürfen die Passwörter in config.json gspeichert werden, ist es nicht gesetzt, werden die Passwörter nicht mit gespeichert. Default der Checkbox ist unchecked
 - Füge ein Ziel MQTT hinzu, bei dem die Daten an einen MQTT-Server geschickt werden. Das umfasst: neue Konfigurationseinstellungen, neuens Konfigurations-Tab, neues telegraf Template
 - Füge ein '--help' Flag hizu. Falls ein ungültiges Flag / Kommando in der cli angegeben wird, zeige den Hilfetext ebenfalls. Der Hilfetext oll nicht nur die Flags / cli Kommandos erklären, sondern auch kurz die Verwendung des Programms.
+- Füge einen Button ein, mit dem man den Inhalt des Ausgabefensters löschen kann
+- Füge einen Button ein, mit de man den Inhalt des Ausgabefensters speichern kann

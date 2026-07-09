@@ -38,6 +38,16 @@ brautomat-telegraf-gui/
 └── bin/                              # Hier die telegraf-Binary pro Zielplattform ablegen
 ```
 
+## Ausgabe leeren/speichern
+
+Über dem Log-Fenster stehen zwei Buttons zur Verfügung:
+
+- **Ausgabe leeren**: löscht den Inhalt des Log-Fensters rein clientseitig
+  (kein Backend-Aufruf nötig).
+- **Ausgabe speichern…**: öffnet einen nativen "Speichern unter"-Dialog
+  und schreibt den kompletten aktuellen Inhalt des Log-Fensters als
+  Textdatei (`SaveLog` in `app.go`).
+
 ## Hilfe / verfügbare Flags
 
 ```
