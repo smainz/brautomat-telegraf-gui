@@ -7,6 +7,11 @@ type Config struct {
 	DeviceURL string `json:"deviceUrl"`
 	Interval  string `json:"interval"` // z.B. "30s"
 
+	// TemplatesDir: Pfad zu einem Verzeichnis mit eigenen Telegraf-Config-
+	// Templates. Leerer String = eingebettete Standard-Templates
+	// verwenden (siehe internal/config/templates.go, GetTemplatesFS).
+	TemplatesDir string `json:"templatesDir"`
+
 	CSV      CSVTarget      `json:"csv"`
 	InfluxDB InfluxDBTarget `json:"influxdb"`
 	Postgres SQLTarget      `json:"postgres"`

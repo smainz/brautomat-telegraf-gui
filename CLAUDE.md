@@ -19,7 +19,7 @@ mitgelieferten `telegraf`-Binary in `bin/`.
 ## Architektur (wichtig für Änderungen)
 
 ```
-main.go                    Flag-Parsing (--templates-dir, --config), embed der frontend/-Assets, wails.Run()
+main.go                    Flag-Parsing (--templates-dir, --config, --export-templates), embed der frontend/-Assets, wails.Run()
 app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
@@ -38,12 +38,19 @@ bin/                          Hier liegt (nach Download) die telegraf-Binary pro
 ```
 
 **Datenfluss beim Klick auf "Start":**
-1. Frontend sammelt Formularwerte in ein `Config`-Objekt (siehe `collectConfig()` in `main.js`)
+1. Frontend sammelt Formularwerte in ein `Config`-Objekt (siehe `collectConfig()` in `main.js`) - inkl. `templatesDir` (leer, wenn "Eigene Templates verwenden" nicht angehakt ist)
 2. `StartTelegraf(cfg)` in `app.go` wird aufgerufen (Wails-Binding)
-3. `config.GetTemplatesFS()` liefert entweder die eingebetteten Templates oder das per `--templates-dir` angegebene Verzeichnis
+3. `config.GetTemplatesFS(cfg.TemplatesDir)` liefert entweder die eingebetteten Templates (leerer String) oder das im Formular angegebene Verzeichnis - das `--templates-dir`-Flag wirkt nur noch als initialer Vorschlagswert (siehe `GetDefaults`), nicht mehr als fixe Vorgabe
 4. `config.Generate()` rendert `telegraf.conf` + je aktiviertem Ziel eine Datei unter `telegraf.d/`
 5. `process.Runner.Start()` startet die `telegraf`-Binary mit `--config` und `--config-directory`
 6. stdout/stderr werden zeilenweise als `telegraf:log`-Event ans Frontend gestreamt
+
+**CLI-Sonderfall `--export-templates <pfad>`:** wird dieses Flag gesetzt,
+exportiert `main.go` vor `wails.Run()` die eingebetteten Templates via
+`config.ExportEmbeddedTemplates()` in das angegebene Verzeichnis und
+beendet das Programm mit `os.Exit(0)`, ohne die GUI zu starten. Gedacht
+als Ausgangspunkt für eigene Templates (danach anpassen und per
+`--templates-dir` oder GUI-Feld referenzieren).
 
 **Wichtig:** Deaktivierte Ziele werden vor dem Rendern explizit aus `telegraf.d/`
 gelöscht (siehe `Generate()` in `generator.go`), da Telegraf jede `.conf`-Datei

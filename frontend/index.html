@@ -18,6 +18,24 @@
     </label>
   </section>
 
+  <section class="panel">
+    <h2>Templates</h2>
+    <label class="enable-toggle">
+      <input type="checkbox" id="customTemplatesEnabled" /> Eigene Templates verwenden
+    </label>
+    <label>Verzeichnis
+      <span class="path-row">
+        <input id="templatesDir" type="text" placeholder="/pfad/zu/eigenen/templates" disabled />
+        <button id="browseTemplatesBtn" type="button" disabled>Durchsuchen…</button>
+      </span>
+    </label>
+    <p class="hint">
+      Deaktiviert: es werden die im Programm eingebetteten Standard-Templates
+      verwendet. Eigene Templates lassen sich als Ausgangspunkt exportieren:
+      <code>./brautomat-telegraf-gui --export-templates &lt;verzeichnis&gt;</code>
+    </p>
+  </section>
+
   <section class="panel targets">
     <h2>Ziele (wahlweise aktivierbar)</h2>
 

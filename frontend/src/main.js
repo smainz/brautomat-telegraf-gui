@@ -11,6 +11,7 @@ import {
   LoadConfig,
   ChooseSaveConfigPath,
   ChooseOpenConfigPath,
+  ChooseTemplatesDir,
   GetDefaultConfigPath,
 } from '../wailsjs/go/main/App.js';
 import { EventsOn } from '../wailsjs/runtime/runtime.js';
@@ -26,6 +27,11 @@ function collectConfig() {
   return {
     deviceUrl: $('deviceUrl').value,
     interval: $('interval').value || '30s',
+    // Ist "Eigene Templates verwenden" nicht angehakt, wird bewusst ein
+    // leerer String gesendet - das bedeutet für das Backend "interne
+    // (eingebettete) Templates verwenden", unabhängig vom zuletzt
+    // eingegebenen Pfad im (dann deaktivierten) Textfeld.
+    templatesDir: $('customTemplatesEnabled').checked ? $('templatesDir').value : '',
     csv: {
       enabled: $('csvEnabled').checked,
       path: $('csvPath').value,
@@ -63,6 +69,11 @@ function collectConfig() {
 function applyConfig(cfg) {
   $('deviceUrl').value = cfg.deviceUrl ?? '';
   $('interval').value = cfg.interval ?? '30s';
+
+  const templatesDir = cfg.templatesDir ?? '';
+  $('customTemplatesEnabled').checked = templatesDir !== '';
+  $('templatesDir').value = templatesDir;
+  syncTemplatesDirState();
 
   $('csvEnabled').checked = !!cfg.csv?.enabled;
   $('csvPath').value = cfg.csv?.path ?? '';
@@ -110,6 +121,14 @@ function showConfigPath(path) {
   $('configPath').textContent = path;
 }
 
+// Aktiviert/deaktiviert das Pfad-Textfeld und den Durchsuchen-Button
+// passend zum Zustand der "Eigene Templates verwenden"-Checkbox.
+function syncTemplatesDirState() {
+  const enabled = $('customTemplatesEnabled').checked;
+  $('templatesDir').disabled = !enabled;
+  $('browseTemplatesBtn').disabled = !enabled;
+}
+
 // Lädt beim Start die zuletzt gespeicherte Konfiguration vom
 // Standardpfad. Existiert dort noch keine Datei, liefert LoadConfig('')
 // bereits die Default()-Werte zurück (siehe app.go), sodass hier kein
@@ -134,6 +153,18 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   EventsOn('telegraf:log', appendLog);
   EventsOn('telegraf:status', (status) => setRunning(status === 'running'));
+
+  $('customTemplatesEnabled').addEventListener('change', syncTemplatesDirState);
+
+  $('browseTemplatesBtn').addEventListener('click', async () => {
+    try {
+      const chosen = await ChooseTemplatesDir();
+      if (!chosen) return; // Dialog abgebrochen
+      $('templatesDir').value = chosen;
+    } catch (err) {
+      appendLog('[Fehler bei der Verzeichnisauswahl] ' + err);
+    }
+  });
 
   $('startBtn').addEventListener('click', async () => {
     try {

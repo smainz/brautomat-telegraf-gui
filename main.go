@@ -3,12 +3,16 @@ package main
 import (
 	"embed"
 	"flag"
+	"fmt"
 	"io/fs"
 	"log"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+
+	"brautomat-telegraf-gui/internal/config"
 )
 
 // assetsRaw enthält den kompletten frontend/-Ordner (index.html, src/*).
@@ -36,7 +40,24 @@ func main() {
 			"standardmäßig bezieht. Wird nichts angegeben, wird\n"+
 			"~/.brautomat-telegraf-gui/config.json verwendet.",
 	)
+	exportTemplatesDir := flag.String(
+		"export-templates",
+		"",
+		"Exportiert die eingebetteten Standard-Templates unverändert in das\n"+
+			"angegebene Verzeichnis und beendet das Programm sofort, OHNE die\n"+
+			"GUI zu starten. Gedacht als Ausgangspunkt, um anschließend mit\n"+
+			"--templates-dir (bzw. dem Templates-Feld in der GUI) eigene\n"+
+			"Templates zu verwenden.",
+	)
 	flag.Parse()
+
+	if *exportTemplatesDir != "" {
+		if err := config.ExportEmbeddedTemplates(*exportTemplatesDir); err != nil {
+			log.Fatalf("Export der Templates fehlgeschlagen: %v", err)
+		}
+		fmt.Printf("Templates exportiert nach %s\n", *exportTemplatesDir)
+		os.Exit(0)
+	}
 
 	// "frontend" als Wurzel des Asset-Servers verwenden, damit
 	// index.html direkt unter "/" erreichbar ist.

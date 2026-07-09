@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
+	"path/filepath"
 )
 
 // defaultTemplates bettet die Standard-Templates zur Kompilierzeit in die
@@ -55,4 +57,39 @@ func GetTemplatesFS(customDir string) (fs.FS, error) {
 	}
 
 	return dirFS, nil
+}
+
+// ExportEmbeddedTemplates schreibt alle eingebetteten Standard-Templates
+// unverändert nach destDir (wird bei Bedarf angelegt). Das ist der
+// vorgesehene Weg, um an einen editierbaren Ausgangspunkt für
+// --templates-dir zu kommen, ohne die Quellen dieses Programms zu
+// besitzen: "--export-templates <pfad>" ruft dies auf und beendet das
+// Programm, ohne die GUI zu starten (siehe main.go).
+func ExportEmbeddedTemplates(destDir string) error {
+	if err := os.MkdirAll(destDir, 0o755); err != nil {
+		return fmt.Errorf("Zielverzeichnis %q konnte nicht angelegt werden: %w", destDir, err)
+	}
+
+	entries, err := fs.ReadDir(defaultTemplates, "templates")
+	if err != nil {
+		return fmt.Errorf("eingebettete Templates konnten nicht gelesen werden: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		data, err := fs.ReadFile(defaultTemplates, path.Join("templates", entry.Name()))
+		if err != nil {
+			return fmt.Errorf("Template %q konnte nicht gelesen werden: %w", entry.Name(), err)
+		}
+
+		destPath := filepath.Join(destDir, entry.Name())
+		if err := os.WriteFile(destPath, data, 0o644); err != nil {
+			return fmt.Errorf("Template %q konnte nicht geschrieben werden: %w", destPath, err)
+		}
+	}
+
+	return nil
 }

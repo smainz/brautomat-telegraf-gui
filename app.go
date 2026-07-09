@@ -16,7 +16,7 @@ import (
 // Alle exportierten Methoden sind aus JavaScript aufrufbar.
 type App struct {
 	ctx            context.Context
-	templatesDir   string // Wert von --templates-dir; leer = eingebettete Defaults verwenden
+	templatesDir   string // Wert von --templates-dir; nur Vorschlagswert fürs Formular (siehe GetDefaults), GUI kann ihn überschreiben
 	configPathFlag string // Wert von --config; leer = ~/.brautomat-telegraf-gui/config.json verwenden
 	workDir        string // temporäres Verzeichnis für generierte telegraf.conf / telegraf.d
 	telegrafPath   string // Pfad zur telegraf-Binary
@@ -64,9 +64,13 @@ func (a *App) shutdown(ctx context.Context) {
 type TelegrafConfig = config.Config
 
 // GetDefaults liefert ein mit Beispielwerten vorbelegtes Config-Objekt,
-// mit dem das Formular im Frontend beim Start befüllt wird.
+// mit dem das Formular im Frontend beim Start befüllt wird. TemplatesDir
+// wird dabei mit dem --templates-dir Flag vorbelegt (falls gesetzt), das
+// Formular kann diesen Wert danach jederzeit überschreiben.
 func (a *App) GetDefaults() TelegrafConfig {
-	return config.Default()
+	cfg := config.Default()
+	cfg.TemplatesDir = a.templatesDir
+	return cfg
 }
 
 // GetDefaultConfigPath liefert den effektiv verwendeten Pfad für die
@@ -104,7 +108,7 @@ func (a *App) LoadConfig(path string) (TelegrafConfig, error) {
 	cfg, err := config.Load(resolved)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return config.Default(), nil
+			return a.GetDefaults(), nil
 		}
 		return TelegrafConfig{}, err
 	}
@@ -161,6 +165,16 @@ func (a *App) ChooseOpenConfigPath() (string, error) {
 	})
 }
 
+// ChooseTemplatesDir öffnet einen nativen Verzeichnis-Dialog, damit der
+// Benutzer den Pfad zu eigenen Templates nicht von Hand eintippen muss.
+// Bricht der Benutzer ab, wird ein leerer String ohne Fehler
+// zurückgegeben.
+func (a *App) ChooseTemplatesDir() (string, error) {
+	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Verzeichnis mit eigenen Templates wählen",
+	})
+}
+
 // StartTelegraf generiert die Telegraf-Config aus den Formulardaten und
 // startet den telegraf-Prozess. Ausgabezeilen werden per Event
 // "telegraf:log" an das Frontend gestreamt, Statuswechsel per
@@ -170,7 +184,10 @@ func (a *App) StartTelegraf(cfg TelegrafConfig) error {
 		return fmt.Errorf("telegraf läuft bereits")
 	}
 
-	tmplFS, err := config.GetTemplatesFS(a.templatesDir)
+	// cfg.TemplatesDir kommt aus dem Formular (leer = interne Templates)
+	// und hat damit Vorrang vor dem --templates-dir Flag, das nur als
+	// initialer Vorschlagswert dient (siehe GetDefaults/LoadConfig).
+	tmplFS, err := config.GetTemplatesFS(cfg.TemplatesDir)
 	if err != nil {
 		return fmt.Errorf("Templates konnten nicht geladen werden: %w", err)
 	}

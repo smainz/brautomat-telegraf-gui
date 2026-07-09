@@ -44,14 +44,17 @@ werden per `//go:embed templates/*.tmpl` fest in die Binary eingebettet
 (siehe `internal/config/templates.go`). Damit funktioniert die App auch
 als reine Einzeldatei ohne weitere Dateien auf der Platte.
 
-Wer eigene Templates verwenden möchte (z. B. anderes DB-Schema, weitere
-Tags, eigene Agent-Optionen), startet die App mit:
+**In der GUI** gibt es dafür ein eigenes "Templates"-Panel:
 
-```
-./brautomat-telegraf-gui --templates-dir /pfad/zu/eigenen/templates
-```
-
-(Kombinierbar mit `--config`, siehe Abschnitt "Konfiguration speichern/laden" unten.)
+- Checkbox **"Eigene Templates verwenden"** deaktiviert: es werden immer
+  die eingebetteten Standard-Templates verwendet (Textfeld ist gesperrt).
+- Checkbox aktiviert: das Verzeichnis im Textfeld (oder per
+  **"Durchsuchen…"**-Button gewählt) wird stattdessen verwendet.
+- Der gewählte Pfad ist Teil der Konfiguration (`templatesDir`-Feld) und
+  wird beim "Speichern" mit gespeichert bzw. beim "Laden" mit geladen.
+- Beim Programmstart wird das Feld mit dem Wert von `--templates-dir`
+  vorbelegt (falls gesetzt) - das Formular kann diesen Wert danach
+  jederzeit ändern, ohne die App neu zu starten.
 
 Das Verzeichnis muss folgende Dateien enthalten (gleiche Namen wie die
 Standard-Templates):
@@ -62,8 +65,27 @@ Standard-Templates):
 - `outputs-postgres.conf.tmpl`
 - `outputs-mysql.conf.tmpl`
 
-Fehlt eine Datei, meldet `GetTemplatesFS` beim Start einen klaren Fehler
-statt später beim Rendern kryptisch abzubrechen.
+Fehlt eine Datei, meldet `GetTemplatesFS` beim Start von Telegraf einen
+klaren Fehler statt später beim Rendern kryptisch abzubrechen.
+
+**Eigene Templates als Ausgangspunkt exportieren:** Statt bei Null
+anzufangen, lassen sich die eingebetteten Standard-Templates per
+CLI-Kommando in ein Verzeichnis exportieren. Diese Variante startet
+**nicht** die GUI, sondern exportiert nur und beendet sich sofort:
+
+```
+./brautomat-telegraf-gui --export-templates /pfad/zu/eigenen/templates
+```
+
+Anschließend die exportierten `.tmpl`-Dateien nach Bedarf anpassen und
+entweder mit `--templates-dir` beim Start referenzieren oder direkt in
+der GUI über "Durchsuchen…" auswählen.
+
+```
+./brautomat-telegraf-gui --templates-dir /pfad/zu/eigenen/templates
+```
+
+(Kombinierbar mit `--config`, siehe Abschnitt "Konfiguration speichern/laden" unten. Der Wert dient nur als initialer Vorschlag - die GUI kann ihn überschreiben.)
 
 Die Templates sind normale Go-`text/template`-Dateien und haben Zugriff
 auf alle Felder von `config.Config` (z. B. `{{.DeviceURL}}`,

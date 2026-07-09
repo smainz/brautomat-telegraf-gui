@@ -59,6 +59,27 @@ fieldset { border: 1px solid #333; border-radius: 4px; margin-bottom: 0.6rem; }
 }
 .enable-toggle input[type="checkbox"] { width: auto; }
 
+.path-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.path-row input[type="text"] { flex: 1; }
+.path-row button { white-space: nowrap; padding: 0.3rem 0.7rem; }
+input:disabled, button:disabled { opacity: 0.5; }
+.hint {
+  font-size: 0.78rem;
+  color: #999;
+  margin: 0.5rem 0 0;
+}
+.hint code {
+  background: #111;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+}
+
+
 .controls { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
 #configPath { font-size: 0.75rem; color: #999; font-family: monospace; }
 button {
