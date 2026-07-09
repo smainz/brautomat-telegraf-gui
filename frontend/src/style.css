@@ -19,7 +19,8 @@ input[type="text"], input[type="password"] {
   box-sizing: border-box;
 }
 fieldset { border: 1px solid #333; border-radius: 4px; margin-bottom: 0.6rem; }
-.controls { display: flex; align-items: center; gap: 0.8rem; }
+.controls { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+#configPath { font-size: 0.75rem; color: #999; font-family: monospace; }
 button {
   padding: 0.4rem 1.2rem; border-radius: 4px; border: none; cursor: pointer;
   background: #3a7; color: white;

@@ -17,6 +17,7 @@ brautomat-telegraf-gui/
 │   │   ├── config.go                # Config-Struct (Formularmodell)
 │   │   ├── templates.go             # //go:embed + GetTemplatesFS (Default vs. --templates-dir)
 │   │   ├── generator.go             # Rendert Templates -> telegraf.conf / telegraf.d/*.conf
+│   │   ├── persistence.go           # Speichern/Laden der Config als JSON, Default-Pfad im Home-Verzeichnis
 │   │   └── templates/               # Eingebettete Standard-Templates
 │   │       ├── telegraf.conf.tmpl
 │   │       ├── outputs-csv.conf.tmpl
@@ -65,6 +66,32 @@ Die Templates sind normale Go-`text/template`-Dateien und haben Zugriff
 auf alle Felder von `config.Config` (z. B. `{{.DeviceURL}}`,
 `{{.InfluxDB.Bucket}}`, `{{.Postgres.Password}}` etc.) — siehe
 `internal/config/config.go` für das vollständige Modell.
+
+## Konfiguration speichern/laden
+
+Das Formular kann als JSON gespeichert und wieder geladen werden:
+
+- **Speichern**: schreibt unter den zuletzt verwendeten Pfad (beim
+  allerersten Mal der Standardpfad).
+- **Speichern unter…**: öffnet einen nativen Dateidialog, damit ein
+  beliebiger Pfad gewählt werden kann.
+- **Laden…**: öffnet einen nativen Dateidialog zum Öffnen einer
+  bestehenden `config.json`.
+
+Der Standardpfad ist plattformübergreifend `~/.brautomat-telegraf-gui/config.json`
+(unter Windows entsprechend `%USERPROFILE%\.brautomat-telegraf-gui\config.json`,
+ermittelt über `os.UserHomeDir()` in `internal/config/persistence.go`).
+Fehlende Verzeichnisse werden beim Speichern automatisch angelegt.
+
+Die App lädt diese Datei beim Start automatisch; existiert sie noch
+nicht, wird stattdessen `config.Default()` verwendet (kein Fehler, siehe
+`LoadConfig` in `app.go`).
+
+**Hinweis:** Da die Konfiguration ggf. Klartext-Zugangsdaten enthält
+(DB-Passwörter, InfluxDB-Token), wird die Datei mit den Rechten `0600`
+(nur Besitzer lesbar/schreibbar) angelegt. Für höhere Sicherheit käme
+später eine Verschlüsselung oder Anbindung an die OS-Keychain in Frage
+(siehe Hinweis weiter unten).
 
 ## Bauen
 

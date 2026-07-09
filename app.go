@@ -64,6 +64,90 @@ func (a *App) GetDefaults() TelegrafConfig {
 	return config.Default()
 }
 
+// GetDefaultConfigPath liefert den Standardpfad, unter dem die
+// Konfiguration gespeichert/geladen wird, wenn kein eigener Pfad gewählt
+// wurde: ~/.brautomat-telegraf-gui/config.json
+func (a *App) GetDefaultConfigPath() (string, error) {
+	return config.DefaultConfigPath()
+}
+
+// SaveConfig speichert cfg als JSON. Ist path leer, wird der Standardpfad
+// (siehe GetDefaultConfigPath) verwendet. Liefert den tatsächlich
+// verwendeten Pfad zurück, damit das Frontend ihn z.B. im Log anzeigen
+// oder für ein späteres "Speichern" (ohne erneuten Dialog) merken kann.
+func (a *App) SaveConfig(cfg TelegrafConfig, path string) (string, error) {
+	resolved, err := a.resolveConfigPath(path)
+	if err != nil {
+		return "", err
+	}
+	if err := config.Save(cfg, resolved); err != nil {
+		return "", err
+	}
+	return resolved, nil
+}
+
+// LoadConfig lädt eine zuvor gespeicherte Config. Ist path leer, wird der
+// Standardpfad verwendet. Existiert dort noch keine Datei (z.B. beim
+// allerersten Start der App), wird Default() zurückgegeben statt eines
+// Fehlers - der Benutzer sieht dann einfach das vorbelegte Formular.
+func (a *App) LoadConfig(path string) (TelegrafConfig, error) {
+	resolved, err := a.resolveConfigPath(path)
+	if err != nil {
+		return TelegrafConfig{}, err
+	}
+
+	cfg, err := config.Load(resolved)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return config.Default(), nil
+		}
+		return TelegrafConfig{}, err
+	}
+	return cfg, nil
+}
+
+func (a *App) resolveConfigPath(path string) (string, error) {
+	if path != "" {
+		return path, nil
+	}
+	return config.DefaultConfigPath()
+}
+
+// ChooseSaveConfigPath öffnet einen nativen "Speichern unter"-Dialog und
+// liefert den vom Benutzer gewählten Pfad zurück. Bricht der Benutzer ab,
+// wird ein leerer String ohne Fehler zurückgegeben.
+func (a *App) ChooseSaveConfigPath() (string, error) {
+	defaultPath, err := config.DefaultConfigPath()
+	if err != nil {
+		return "", err
+	}
+	return runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:            "Konfiguration speichern unter",
+		DefaultDirectory: filepath.Dir(defaultPath),
+		DefaultFilename:  filepath.Base(defaultPath),
+		Filters: []runtime.FileFilter{
+			{DisplayName: "JSON-Dateien (*.json)", Pattern: "*.json"},
+		},
+	})
+}
+
+// ChooseOpenConfigPath öffnet einen nativen "Öffnen"-Dialog und liefert
+// den vom Benutzer gewählten Pfad zurück. Bricht der Benutzer ab, wird
+// ein leerer String ohne Fehler zurückgegeben.
+func (a *App) ChooseOpenConfigPath() (string, error) {
+	defaultPath, err := config.DefaultConfigPath()
+	if err != nil {
+		return "", err
+	}
+	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Konfiguration öffnen",
+		DefaultDirectory: filepath.Dir(defaultPath),
+		Filters: []runtime.FileFilter{
+			{DisplayName: "JSON-Dateien (*.json)", Pattern: "*.json"},
+		},
+	})
+}
+
 // StartTelegraf generiert die Telegraf-Config aus den Formulardaten und
 // startet den telegraf-Prozess. Ausgabezeilen werden per Event
 // "telegraf:log" an das Frontend gestreamt, Statuswechsel per
