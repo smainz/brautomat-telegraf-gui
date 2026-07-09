@@ -9,6 +9,8 @@
   gleich startet, ohne die GUI anzuzeigen. Dabei soll der telegraf Prozess
   in der Konfiguration gestartet werden, die eingelesen wurde. Was passiert, wenn
   keine Passwörter gespeichert sind, überlege ich mir später.
+- Flag für Log-Level hinzufügen, mit dem festgelgt werden kann, welche Log-Meldungen
+  auf der Konsole ausgegeben werden.
 
 ## Done
 - `--config` Flag einbauen
