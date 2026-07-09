@@ -24,7 +24,7 @@ app.go                      An das Frontend gebundene API: StartTelegraf, StopTe
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
   templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
-  templates/*.tmpl           Die 5 eingebetteten Standard-Templates (text/template-Syntax)
+  templates/*.tmpl           Die 6 eingebetteten Standard-Templates (text/template-Syntax)
   generator.go               Rendert Templates -> telegraf.conf + telegraf.d/outputs-*.conf
   persistence.go             DefaultConfigPath() (~/.brautomat-telegraf-gui/config.json) + Save()/Load() als JSON; Save() entfernt Passwörter/Token, wenn cfg.SavePasswords false ist (Default)
 internal/process/
@@ -120,11 +120,13 @@ sinnvollste Einstiegspunkt.
   siehe `shutdown()` in `app.go`) **und**, falls die Checkbox "Passwörter
   speichern" aktiviert ist (`cfg.SavePasswords`, Default `false`), in der
   persistierten `~/.brautomat-telegraf-gui/config.json` (0600-Rechte,
-  siehe `persistence.go`). Die Durchsetzung von `SavePasswords` sitzt
-  bewusst in `Save()` selbst (`stripSecrets`), nicht nur im Frontend -
-  bei Änderungen an dieser Logik nicht versehentlich nur die
-  Frontend-Seite anpassen. Bei weiteren Änderungen an diesem Bereich die
-  Sicherheitshinweise in `README.md` beachten (Secret-Store, OS-Keychain).
+  siehe `persistence.go`). Betroffen: InfluxDB-Token, Postgres-/MySQL-/
+  MQTT-Passwort (siehe `stripSecrets` in `persistence.go`). Die
+  Durchsetzung von `SavePasswords` sitzt bewusst in `Save()` selbst, nicht
+  nur im Frontend - bei Änderungen an dieser Logik nicht versehentlich nur
+  die Frontend-Seite anpassen. Bei weiteren Änderungen an diesem Bereich
+  die Sicherheitshinweise in `README.md` beachten (Secret-Store,
+  OS-Keychain).
 
 ## Nicht tun
 

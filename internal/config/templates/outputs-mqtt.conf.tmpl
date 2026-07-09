@@ -1,0 +1,8 @@
+[[outputs.mqtt]]
+  servers = ["{{.MQTT.Server}}"]
+  topic = "{{.MQTT.Topic}}"
+  qos = {{.MQTT.QoS}}
+  client_id = "{{.MQTT.ClientID}}"
+  username = "{{.MQTT.Username}}"
+  password = "{{.MQTT.Password}}"
+  data_format = "json"

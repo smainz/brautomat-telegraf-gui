@@ -26,6 +26,7 @@ var requiredTemplateFiles = []string{
 	"outputs-influxdb.conf.tmpl",
 	"outputs-postgres.conf.tmpl",
 	"outputs-mysql.conf.tmpl",
+	"outputs-mqtt.conf.tmpl",
 }
 
 // GetTemplatesFS liefert das Dateisystem, aus dem Templates geladen werden.

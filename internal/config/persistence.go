@@ -60,12 +60,13 @@ func Save(cfg Config, path string) error {
 }
 
 // stripSecrets liefert eine Kopie von cfg ohne InfluxDB-Token und ohne
-// Postgres-/MySQL-Passwort. cfg wird dabei per Wert übergeben, sodass
-// das Original des Aufrufers unverändert bleibt.
+// Postgres-/MySQL-/MQTT-Passwort. cfg wird dabei per Wert übergeben,
+// sodass das Original des Aufrufers unverändert bleibt.
 func stripSecrets(cfg Config) Config {
 	cfg.InfluxDB.Token = ""
 	cfg.Postgres.Password = ""
 	cfg.MySQL.Password = ""
+	cfg.MQTT.Password = ""
 	return cfg
 }
 

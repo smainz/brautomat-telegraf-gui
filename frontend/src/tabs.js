@@ -34,6 +34,7 @@ const enabledCheckboxIdByTab = {
   influx: 'influxEnabled',
   pg: 'pgEnabled',
   my: 'myEnabled',
+  mqtt: 'mqttEnabled',
 };
 
 function syncEnabledIndicator(tabId) {

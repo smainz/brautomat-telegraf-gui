@@ -13,7 +13,7 @@ h1 { font-size: 1.3rem; }
 }
 .panel h2 { margin-top: 0; font-size: 1rem; color: #9fd; }
 label { display: block; margin: 0.3rem 0; font-size: 0.85rem; }
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], select {
   width: 100%; padding: 0.3rem; margin-top: 0.15rem;
   background: #2a2a2a; border: 1px solid #555; color: #eee; border-radius: 4px;
   box-sizing: border-box;

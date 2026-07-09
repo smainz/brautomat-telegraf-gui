@@ -22,6 +22,7 @@ type Config struct {
 	InfluxDB InfluxDBTarget `json:"influxdb"`
 	Postgres SQLTarget      `json:"postgres"`
 	MySQL    SQLTarget      `json:"mysql"`
+	MQTT     MQTTTarget     `json:"mqtt"`
 }
 
 type CSVTarget struct {
@@ -48,6 +49,21 @@ type SQLTarget struct {
 	Password string `json:"password"`
 }
 
+// MQTTTarget beschreibt einen MQTT-Broker als Ziel. QoS bleibt bewusst
+// als String (statt int) im Modell, da es 1:1 aus einem Formularfeld
+// kommt und unverändert - ohne Anführungszeichen - ins TOML-Template
+// eingesetzt wird (siehe outputs-mqtt.conf.tmpl); Default() sorgt dafür,
+// dass hier nie ein leerer String ankommt.
+type MQTTTarget struct {
+	Enabled  bool   `json:"enabled"`
+	Server   string `json:"server"` // z.B. tcp://localhost:1883
+	Topic    string `json:"topic"`
+	ClientID string `json:"clientId"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	QoS      string `json:"qos"` // "0", "1" oder "2"
+}
+
 // Default liefert ein Config mit sinnvollen Platzhalterwerten für den
 // initialen Formularzustand im Frontend.
 func Default() Config {
@@ -71,6 +87,11 @@ func Default() Config {
 			Port:     "3306",
 			Database: "brautomat",
 			User:     "brautomat",
+		},
+		MQTT: MQTTTarget{
+			Server: "tcp://localhost:1883",
+			Topic:  "brautomat/telemetry",
+			QoS:    "0",
 		},
 	}
 }

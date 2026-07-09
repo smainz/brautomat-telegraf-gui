@@ -23,7 +23,8 @@ brautomat-telegraf-gui/
 │   │       ├── outputs-csv.conf.tmpl
 │   │       ├── outputs-influxdb.conf.tmpl
 │   │       ├── outputs-postgres.conf.tmpl
-│   │       └── outputs-mysql.conf.tmpl
+│   │       ├── outputs-mysql.conf.tmpl
+│   │       └── outputs-mqtt.conf.tmpl
 │   └── process/
 │       ├── runner.go                # Start/Stop/Log-Streaming (plattformneutraler Teil)
 │       ├── process_unix.go          # SIGTERM/SIGKILL, Prozessgruppen (Linux/macOS)
@@ -64,6 +65,7 @@ Standard-Templates):
 - `outputs-influxdb.conf.tmpl`
 - `outputs-postgres.conf.tmpl`
 - `outputs-mysql.conf.tmpl`
+- `outputs-mqtt.conf.tmpl`
 
 Fehlt eine Datei, meldet `GetTemplatesFS` beim Start von Telegraf einen
 klaren Fehler statt später beim Rendern kryptisch abzubrechen.

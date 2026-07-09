@@ -44,6 +44,7 @@
       <button class="tab-btn" data-tab="influx" role="tab" aria-selected="false">InfluxDB v2</button>
       <button class="tab-btn" data-tab="pg" role="tab" aria-selected="false">PostgreSQL</button>
       <button class="tab-btn" data-tab="my" role="tab" aria-selected="false">MariaDB / MySQL</button>
+      <button class="tab-btn" data-tab="mqtt" role="tab" aria-selected="false">MQTT</button>
     </div>
 
     <div class="tab-panel active" data-tab-panel="csv">
@@ -76,6 +77,22 @@
       <label>Benutzer <input id="myUser" type="text" /></label>
       <label>Passwort <input id="myPassword" type="password" /></label>
     </div>
+
+    <div class="tab-panel" data-tab-panel="mqtt">
+      <label class="enable-toggle"><input type="checkbox" id="mqttEnabled" /> Ziel aktivieren</label>
+      <label>Server <input id="mqttServer" type="text" placeholder="tcp://localhost:1883" /></label>
+      <label>Topic <input id="mqttTopic" type="text" placeholder="brautomat/telemetry" /></label>
+      <label>Client-ID <input id="mqttClientId" type="text" placeholder="optional" /></label>
+      <label>QoS
+        <select id="mqttQos">
+          <option value="0">0 - höchstens einmal</option>
+          <option value="1">1 - mindestens einmal</option>
+          <option value="2">2 - genau einmal</option>
+        </select>
+      </label>
+      <label>Benutzer <input id="mqttUsername" type="text" placeholder="optional" /></label>
+      <label>Passwort <input id="mqttPassword" type="password" /></label>
+    </div>
   </section>
 
   <section class="panel controls">
@@ -90,8 +107,8 @@
       <input type="checkbox" id="savePasswordsEnabled" /> Passwörter speichern
     </label>
     <p class="hint">
-      Betrifft das InfluxDB-Token sowie die Datenbank-Passwörter für
-      PostgreSQL und MariaDB/MySQL. Ist diese Option nicht aktiviert
+      Betrifft das InfluxDB-Token sowie die Passwörter für PostgreSQL,
+      MariaDB/MySQL und MQTT. Ist diese Option nicht aktiviert
       (Standard), werden diese Felder beim Speichern aus der
       Konfigurationsdatei ausgelassen und müssen nach dem Laden erneut
       eingetragen werden.

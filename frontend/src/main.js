@@ -60,6 +60,15 @@ function collectConfig() {
       user: $('myUser').value,
       password: $('myPassword').value,
     },
+    mqtt: {
+      enabled: $('mqttEnabled').checked,
+      server: $('mqttServer').value,
+      topic: $('mqttTopic').value,
+      clientId: $('mqttClientId').value,
+      qos: $('mqttQos').value,
+      username: $('mqttUsername').value,
+      password: $('mqttPassword').value,
+    },
   };
 }
 
@@ -102,6 +111,16 @@ function applyConfig(cfg) {
   $('myDatabase').value = cfg.mysql?.database ?? '';
   $('myUser').value = cfg.mysql?.user ?? '';
   $('myPassword').value = cfg.mysql?.password ?? '';
+
+  $('mqttEnabled').checked = !!cfg.mqtt?.enabled;
+  $('mqttServer').value = cfg.mqtt?.server ?? '';
+  $('mqttTopic').value = cfg.mqtt?.topic ?? '';
+  $('mqttClientId').value = cfg.mqtt?.clientId ?? '';
+  // Fallback '0', falls aus einer älteren config.json ohne MQTT-Feld
+  // geladen wird - qos darf im Template nie leer sein (siehe MQTTTarget).
+  $('mqttQos').value = cfg.mqtt?.qos || '0';
+  $('mqttUsername').value = cfg.mqtt?.username ?? '';
+  $('mqttPassword').value = cfg.mqtt?.password ?? '';
 
   // Checkboxen wurden hier programmatisch gesetzt, was kein "change"-Event
   // auslöst. tabs.js hört auf dieses Event, um die Tab-Indikatoren

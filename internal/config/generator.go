@@ -36,6 +36,7 @@ func Generate(tmplFS fs.FS, cfg Config, outDir string) error {
 		{cfg.InfluxDB.Enabled, "outputs-influxdb.conf.tmpl", "outputs-influxdb.conf"},
 		{cfg.Postgres.Enabled, "outputs-postgres.conf.tmpl", "outputs-postgres.conf"},
 		{cfg.MySQL.Enabled, "outputs-mysql.conf.tmpl", "outputs-mysql.conf"},
+		{cfg.MQTT.Enabled, "outputs-mqtt.conf.tmpl", "outputs-mqtt.conf"},
 	}
 
 	// Zuerst alle zuvor generierten Output-Configs entfernen, damit
