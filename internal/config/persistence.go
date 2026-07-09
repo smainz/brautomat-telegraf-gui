@@ -28,16 +28,27 @@ func DefaultConfigPath() (string, error) {
 // werden automatisch angelegt (relevant für den Default-Pfad, dessen
 // Unterordner beim allerersten Speichern noch nicht existiert).
 //
+// Ist cfg.SavePasswords nicht gesetzt (Default), werden InfluxDB-Token
+// sowie Postgres-/MySQL-Passwort vor dem Schreiben entfernt (siehe
+// stripSecrets) - unabhängig davon, was der Aufrufer sonst noch in cfg
+// übergeben hat. Diese Durchsetzung sitzt bewusst hier im Backend statt
+// nur im Frontend, damit sie auch bei zukünftigen Aufrufstellen sicher
+// greift.
+//
 // Die Datei wird mit den Rechten 0600 (nur Besitzer darf lesen/schreiben)
-// angelegt, da die Konfiguration ggf. Klartext-Zugangsdaten enthält
-// (DB-Passwörter, InfluxDB-Token).
+// angelegt, unabhängig von SavePasswords.
 func Save(cfg Config, path string) error {
+	toWrite := cfg
+	if !cfg.SavePasswords {
+		toWrite = stripSecrets(cfg)
+	}
+
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("Verzeichnis %q konnte nicht angelegt werden: %w", dir, err)
 	}
 
-	data, err := json.MarshalIndent(cfg, "", "  ")
+	data, err := json.MarshalIndent(toWrite, "", "  ")
 	if err != nil {
 		return fmt.Errorf("Config konnte nicht serialisiert werden: %w", err)
 	}
@@ -46,6 +57,16 @@ func Save(cfg Config, path string) error {
 		return fmt.Errorf("Datei %q konnte nicht geschrieben werden: %w", path, err)
 	}
 	return nil
+}
+
+// stripSecrets liefert eine Kopie von cfg ohne InfluxDB-Token und ohne
+// Postgres-/MySQL-Passwort. cfg wird dabei per Wert übergeben, sodass
+// das Original des Aufrufers unverändert bleibt.
+func stripSecrets(cfg Config) Config {
+	cfg.InfluxDB.Token = ""
+	cfg.Postgres.Password = ""
+	cfg.MySQL.Password = ""
+	return cfg
 }
 
 // Load liest eine zuvor gespeicherte Config von path.

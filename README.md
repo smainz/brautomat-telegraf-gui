@@ -94,18 +94,34 @@ auf alle Felder von `config.Config` (z. B. `{{.DeviceURL}}`,
 
 ## Konfiguration speichern/laden
 
-Das Formular kann als JSON gespeichert und wieder geladen werden:
+Das Formular kann als JSON gespeichert und wieder geladen werden (Panel
+"Konfiguration"):
 
-- **Speichern**: schreibt unter den zuletzt verwendeten Pfad (beim
-  allerersten Mal der effektive Standardpfad, siehe unten).
-- **Speichern unter…**: öffnet einen nativen Dateidialog, damit ein
-  beliebiger Pfad gewählt werden kann.
-- **Laden…**: öffnet einen nativen Dateidialog zum Öffnen einer
-  bestehenden `config.json`.
+- **Konfiguration speichern**: schreibt unter den zuletzt verwendeten Pfad
+  (beim allerersten Mal der effektive Standardpfad, siehe unten).
+- **Konfiguration speichern unter…**: öffnet einen nativen Dateidialog,
+  damit ein beliebiger Pfad gewählt werden kann.
+- **Konfiguration laden…**: öffnet einen nativen Dateidialog zum Öffnen
+  einer bestehenden `config.json`.
 
 Beim Programmstart wird automatisch versucht, die Konfiguration vom
 effektiven Standardpfad zu laden; existiert dort keine Datei, wird
 stattdessen `config.Default()` verwendet (kein Fehler).
+
+### Passwörter speichern
+
+Standardmäßig **nicht** angehakt. Ist die Checkbox **"Passwörter
+speichern"** deaktiviert, entfernt `Save()` (`internal/config/persistence.go`)
+das InfluxDB-Token sowie die Postgres-/MySQL-Passwörter vor dem
+Schreiben aus der Konfiguration - unabhängig davon, was im Formular
+eingetragen war. Diese Durchsetzung sitzt bewusst im Backend, nicht nur
+im Frontend.
+
+Nach dem Laden einer so gespeicherten `config.json` sind die
+entsprechenden Passwortfelder leer und müssen vor "Start" erneut
+eingetragen werden. Ist die Checkbox aktiviert, werden alle Felder
+inklusive Zugangsdaten im Klartext mitgespeichert (siehe Sicherheitshinweis
+unten).
 
 Der **effektive Standardpfad** ergibt sich in dieser Reihenfolge:
 
@@ -158,11 +174,17 @@ wails dev
 
 ## Sicherheitshinweis zu Zugangsdaten
 
-Aktuell werden die Zugangsdaten direkt in die generierte
-`telegraf.d/outputs-*.conf` im temporären Arbeitsverzeichnis
-(`os.MkdirTemp`) geschrieben, das beim Beenden der App wieder gelöscht
-wird (`app.go`, `shutdown`). Für produktiven Einsatz empfiehlt es sich,
-zusätzlich:
+Erste Absicherung: die "Passwörter speichern"-Checkbox (Default: aus) -
+solange sie nicht aktiviert wird, landen InfluxDB-Token und DB-Passwörter
+gar nicht erst in der persistierten `config.json` (siehe Abschnitt
+"Konfiguration speichern/laden" oben).
+
+Aktiviert der Benutzer diese Option dennoch, werden die Zugangsdaten
+direkt in die generierte `telegraf.d/outputs-*.conf` im temporären
+Arbeitsverzeichnis (`os.MkdirTemp`, wird beim Beenden der App wieder
+gelöscht, siehe `shutdown` in `app.go`) sowie in die persistierte
+`config.json` (Rechte `0600`) geschrieben. Für produktiven Einsatz
+empfiehlt es sich zusätzlich:
 
 - die Dateirechte des Arbeitsverzeichnisses einzuschränken,
 - optional einen Telegraf-Secret-Store (`secretstores.file` /

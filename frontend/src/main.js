@@ -32,6 +32,7 @@ function collectConfig() {
     // (eingebettete) Templates verwenden", unabhängig vom zuletzt
     // eingegebenen Pfad im (dann deaktivierten) Textfeld.
     templatesDir: $('customTemplatesEnabled').checked ? $('templatesDir').value : '',
+    savePasswords: $('savePasswordsEnabled').checked,
     csv: {
       enabled: $('csvEnabled').checked,
       path: $('csvPath').value,
@@ -74,6 +75,10 @@ function applyConfig(cfg) {
   $('customTemplatesEnabled').checked = templatesDir !== '';
   $('templatesDir').value = templatesDir;
   syncTemplatesDirState();
+
+  // Default unchecked, falls nicht in cfg vorhanden (z.B. sehr alte,
+  // vor dieser Funktion gespeicherte config.json).
+  $('savePasswordsEnabled').checked = !!cfg.savePasswords;
 
   $('csvEnabled').checked = !!cfg.csv?.enabled;
   $('csvPath').value = cfg.csv?.path ?? '';
@@ -186,9 +191,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   // noch nie ein eigener Pfad gewählt wurde) - ohne erneuten Dialog.
   $('saveBtn').addEventListener('click', async () => {
     try {
-      const savedPath = await SaveConfig(collectConfig(), currentConfigPath);
+      const cfg = collectConfig();
+      const savedPath = await SaveConfig(cfg, currentConfigPath);
       showConfigPath(savedPath);
-      appendLog('[Config] gespeichert unter ' + savedPath);
+      appendLog('[Config] gespeichert unter ' + savedPath + (cfg.savePasswords ? '' : ' (ohne Passwörter)'));
     } catch (err) {
       appendLog('[Fehler beim Speichern] ' + err);
     }
@@ -200,9 +206,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
       const chosen = await ChooseSaveConfigPath();
       if (!chosen) return; // Dialog abgebrochen
-      const savedPath = await SaveConfig(collectConfig(), chosen);
+      const cfg = collectConfig();
+      const savedPath = await SaveConfig(cfg, chosen);
       showConfigPath(savedPath);
-      appendLog('[Config] gespeichert unter ' + savedPath);
+      appendLog('[Config] gespeichert unter ' + savedPath + (cfg.savePasswords ? '' : ' (ohne Passwörter)'));
     } catch (err) {
       appendLog('[Fehler beim Speichern] ' + err);
     }

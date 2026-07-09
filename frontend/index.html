@@ -84,11 +84,24 @@
     <span id="status">gestoppt</span>
   </section>
 
-  <section class="panel controls">
-    <button id="saveBtn">Speichern</button>
-    <button id="saveAsBtn">Speichern unter…</button>
-    <button id="loadBtn">Laden…</button>
-    <span id="configPath"></span>
+  <section class="panel">
+    <h2>Konfiguration</h2>
+    <label class="enable-toggle">
+      <input type="checkbox" id="savePasswordsEnabled" /> Passwörter speichern
+    </label>
+    <p class="hint">
+      Betrifft das InfluxDB-Token sowie die Datenbank-Passwörter für
+      PostgreSQL und MariaDB/MySQL. Ist diese Option nicht aktiviert
+      (Standard), werden diese Felder beim Speichern aus der
+      Konfigurationsdatei ausgelassen und müssen nach dem Laden erneut
+      eingetragen werden.
+    </p>
+    <div class="controls">
+      <button id="saveBtn">Konfiguration speichern</button>
+      <button id="saveAsBtn">Konfiguration speichern unter…</button>
+      <button id="loadBtn">Konfiguration laden…</button>
+      <span id="configPath"></span>
+    </div>
   </section>
 
   <section class="panel">

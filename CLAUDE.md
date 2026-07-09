@@ -26,7 +26,7 @@ internal/config/
   templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
   templates/*.tmpl           Die 5 eingebetteten Standard-Templates (text/template-Syntax)
   generator.go               Rendert Templates -> telegraf.conf + telegraf.d/outputs-*.conf
-  persistence.go             DefaultConfigPath() (~/.brautomat-telegraf-gui/config.json) + Save()/Load() als JSON
+  persistence.go             DefaultConfigPath() (~/.brautomat-telegraf-gui/config.json) + Save()/Load() als JSON; Save() entfernt Passwörter/Token, wenn cfg.SavePasswords false ist (Default)
 internal/process/
   runner.go                  Plattformneutrale Prozesssteuerung (Start/Stop/Log-Streaming)
   process_unix.go             Prozessgruppen + SIGTERM/SIGKILL (build tag: !windows)
@@ -117,9 +117,13 @@ sinnvollste Einstiegspunkt.
 
 - **Zugangsdaten** landen aktuell im Klartext in der generierten Config im
   temporären Arbeitsverzeichnis (`os.MkdirTemp`, wird beim Beenden gelöscht,
-  siehe `shutdown()` in `app.go`) **und** in der persistierten
-  `~/.brautomat-telegraf-gui/config.json` (0600-Rechte, siehe
-  `persistence.go`). Bei Änderungen an diesem Bereich die
+  siehe `shutdown()` in `app.go`) **und**, falls die Checkbox "Passwörter
+  speichern" aktiviert ist (`cfg.SavePasswords`, Default `false`), in der
+  persistierten `~/.brautomat-telegraf-gui/config.json` (0600-Rechte,
+  siehe `persistence.go`). Die Durchsetzung von `SavePasswords` sitzt
+  bewusst in `Save()` selbst (`stripSecrets`), nicht nur im Frontend -
+  bei Änderungen an dieser Logik nicht versehentlich nur die
+  Frontend-Seite anpassen. Bei weiteren Änderungen an diesem Bereich die
   Sicherheitshinweise in `README.md` beachten (Secret-Store, OS-Keychain).
 
 ## Nicht tun

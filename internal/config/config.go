@@ -12,6 +12,12 @@ type Config struct {
 	// verwenden (siehe internal/config/templates.go, GetTemplatesFS).
 	TemplatesDir string `json:"templatesDir"`
 
+	// SavePasswords steuert, ob Save() Passwörter/Token (InfluxDB-Token,
+	// Postgres-/MySQL-Passwort) mit in die Konfigurationsdatei schreibt.
+	// Zero-Value ist false, d.h. Passwörter werden standardmäßig NICHT
+	// gespeichert (siehe Save() in persistence.go).
+	SavePasswords bool `json:"savePasswords"`
+
 	CSV      CSVTarget      `json:"csv"`
 	InfluxDB InfluxDBTarget `json:"influxdb"`
 	Postgres SQLTarget      `json:"postgres"`
