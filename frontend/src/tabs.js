@@ -63,3 +63,28 @@ syncAllEnabledIndicators();
 // CustomEvent, damit die Tab-Indikatoren danach erneut synchronisiert
 // werden.
 window.addEventListener('brautomat:config-applied', syncAllEnabledIndicators);
+
+// ============================================================
+// Top-Level-Tabs (Main / Konfiguration)
+// ============================================================
+// Bewusst eigene Klassennamen (top-tab-btn/top-tab-panel statt
+// tab-btn/tab-panel), damit diese Navigation unabhängig von der
+// Ziele-Tab-Logik oben bleibt und sich beide nicht gegenseitig stören.
+
+const topTabButtons = document.querySelectorAll('.top-tab-btn');
+const topTabPanels = document.querySelectorAll('.top-tab-panel');
+
+function activateTopTab(tabId) {
+  topTabButtons.forEach((btn) => {
+    const isActive = btn.dataset.topTab === tabId;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+  });
+  topTabPanels.forEach((panel) => {
+    panel.classList.toggle('active', panel.dataset.topTabPanel === tabId);
+  });
+}
+
+topTabButtons.forEach((btn) => {
+  btn.addEventListener('click', () => activateTopTab(btn.dataset.topTab));
+});

@@ -32,8 +32,8 @@ internal/process/
   process_unix.go             Prozessgruppen + SIGTERM/SIGKILL (build tag: !windows)
   process_windows.go          cmd.Process.Kill() (build tag: windows)
 frontend/
-  index.html + src/main.js    Formular (Ziele als Tabs) + Log-Fenster, ruft generierte wailsjs-Bindings auf
-  src/tabs.js                 Reine UI-Logik: Tab-Umschaltung, unabhängig von main.js
+  index.html + src/main.js    Formular in zwei Top-Level-Tabs ("Main": Gerät/Start-Stop/Ausgabe; "Konfiguration": Ziele/Templates/Speichern), ruft generierte wailsjs-Bindings auf
+  src/tabs.js                 Reine UI-Logik: zwei unabhängige Tab-Ebenen (Top-Level .top-tab-btn/.top-tab-panel + Ziele-Unter-Tabs .tab-btn/.tab-panel), unabhängig von main.js
 bin/                          Hier liegt (nach Download) die telegraf-Binary pro Zielplattform
 tools/
   mock-server/main.go         Eigenständiger /telemetry-Mock für die Entwicklung (reines stdlib, kein Wails-Import)
@@ -136,7 +136,7 @@ Brautomat erreichbar zu haben.
   1. Neues Template unter `internal/config/templates/outputs-<name>.conf.tmpl` anlegen
   2. Passendes Feld in `Config` (config.go) ergänzen (JSON-Tag beachten)
   3. Eintrag in der `targets`-Liste in `generator.go` (`Generate()`) ergänzen
-  4. Neuen Tab-Button + Tab-Panel in `frontend/index.html` ergänzen (gleiches Muster wie CSV/InfluxDB/Postgres/MySQL/MQTT: `data-tab`/`data-tab-panel`, Checkbox mit Klasse `enable-toggle`)
+  4. Neuen Tab-Button + Tab-Panel im "Ziele"-Bereich in `frontend/index.html` ergänzen (innerhalb des "Konfiguration"-Top-Level-Tabs, gleiches Muster wie CSV/InfluxDB/Postgres/MySQL/MQTT: `data-tab`/`data-tab-panel`, Checkbox mit Klasse `enable-toggle`) - NICHT mit den Top-Level-Tabs (`data-top-tab`/`data-top-tab-panel`) verwechseln
   5. Neuen Eintrag in `enabledCheckboxIdByTab` in `tabs.js` ergänzen, damit der Enabled-Indikator auch für das neue Ziel funktioniert
   6. `collectConfig()`/`applyConfig()` in `main.js` ergänzen
   7. `requiredTemplateFiles` in `templates.go` erweitern, damit `--templates-dir`-Validierung greift

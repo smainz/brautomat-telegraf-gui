@@ -149,12 +149,13 @@ function showConfigPath(path) {
   $('configPath').textContent = path;
 }
 
-// Aktiviert/deaktiviert das Pfad-Textfeld und den Durchsuchen-Button
-// passend zum Zustand der "Eigene Templates verwenden"-Checkbox.
+// Blendet den Bereich mit Pfad-Textfeld, "Durchsuchen…" und
+// "Templates exportieren…" komplett aus, solange "Eigene Templates
+// verwenden" nicht angehakt ist - nicht nur deaktiviert, sondern
+// unsichtbar (siehe .hidden in style.css).
 function syncTemplatesDirState() {
   const enabled = $('customTemplatesEnabled').checked;
-  $('templatesDir').disabled = !enabled;
-  $('browseTemplatesBtn').disabled = !enabled;
+  $('customTemplatesControls').classList.toggle('hidden', !enabled);
 }
 
 // Lädt beim Start die zuletzt gespeicherte Konfiguration vom

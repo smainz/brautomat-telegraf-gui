@@ -41,6 +41,22 @@ brautomat-telegraf-gui/
         └── main.go                   # Eigenständiger Mock für /telemetry (Entwicklung ohne echtes Gerät)
 ```
 
+## Aufbau der Oberfläche
+
+Die GUI ist in zwei Top-Level-Tabs aufgeteilt:
+
+- **Main**: Geräte-URL/Abrufintervall, Start/Stop, Ausgabefenster (mit
+  "Ausgabe leeren"/"Ausgabe speichern…" darunter). Das ist der Tab für
+  den laufenden Betrieb.
+- **Konfiguration**: alles, was seltener angefasst wird, in dieser
+  Reihenfolge: Ziele (CSV/InfluxDB/PostgreSQL/MySQL/MQTT als
+  Unter-Tabs), Templates-Konfiguration, Konfiguration speichern/laden.
+
+Die Umschaltung sitzt in `frontend/src/tabs.js` (Top-Level-Tabs:
+`.top-tab-btn`/`.top-tab-panel`; Ziele-Unter-Tabs: `.tab-btn`/`.tab-panel`
+- bewusst getrennte Klassennamen, damit sich beide Tab-Ebenen nicht
+  gegenseitig beeinflussen).
+
 ## Headless-Modus (ohne GUI)
 
 ```
@@ -151,12 +167,16 @@ werden per `//go:embed templates/*.tmpl` fest in die Binary eingebettet
 (siehe `internal/config/templates.go`). Damit funktioniert die App auch
 als reine Einzeldatei ohne weitere Dateien auf der Platte.
 
-**In der GUI** gibt es dafür ein eigenes "Templates"-Panel:
+**In der GUI** (Tab "Konfiguration") gibt es dafür ein eigenes
+"Templates-Konfiguration"-Panel:
 
 - Checkbox **"Eigene Templates verwenden"** deaktiviert: es werden immer
-  die eingebetteten Standard-Templates verwendet (Textfeld ist gesperrt).
-- Checkbox aktiviert: das Verzeichnis im Textfeld (oder per
-  **"Durchsuchen…"**-Button gewählt) wird stattdessen verwendet.
+  die eingebetteten Standard-Templates verwendet; Pfad-Textfeld,
+  "Durchsuchen…" und "Templates exportieren…" sind dabei komplett
+  ausgeblendet.
+- Checkbox aktiviert: Pfad-Textfeld, "Durchsuchen…" und "Templates
+  exportieren…" werden eingeblendet; das Verzeichnis im Textfeld (oder
+  per **"Durchsuchen…"**-Button gewählt) wird stattdessen verwendet.
 - Der gewählte Pfad ist Teil der Konfiguration (`templatesDir`-Feld) und
   wird beim "Speichern" mit gespeichert bzw. beim "Laden" mit geladen.
 - Beim Programmstart wird das Feld mit dem Wert von `--templates-dir`
@@ -179,7 +199,8 @@ klaren Fehler statt später beim Rendern kryptisch abzubrechen.
 **Eigene Templates als Ausgangspunkt exportieren:** Statt bei Null
 anzufangen, lassen sich die eingebetteten Standard-Templates exportieren
 - entweder direkt in der GUI über den Button **"Templates
-exportieren…"** im Templates-Panel (öffnet einen nativen
+exportieren…"** im Templates-Konfiguration-Panel (sichtbar bei
+aktivierter "Eigene Templates verwenden"-Checkbox, öffnet einen nativen
 Verzeichnis-Dialog), oder per CLI-Kommando. Die CLI-Variante startet
 **nicht** die GUI, sondern exportiert nur und beendet sich sofort:
 
@@ -204,8 +225,8 @@ auf alle Felder von `config.Config` (z. B. `{{.DeviceURL}}`,
 
 ## Konfiguration speichern/laden
 
-Das Formular kann als JSON gespeichert und wieder geladen werden (Panel
-"Konfiguration"):
+Das Formular kann als JSON gespeichert und wieder geladen werden (Tab
+"Konfiguration", Panel "Konfiguration speichern"):
 
 - **Konfiguration speichern**: schreibt unter den zuletzt verwendeten Pfad
   (beim allerersten Mal der effektive Standardpfad, siehe unten).
