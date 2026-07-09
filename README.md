@@ -38,6 +38,18 @@ brautomat-telegraf-gui/
 └── bin/                              # Hier die telegraf-Binary pro Zielplattform ablegen
 ```
 
+## Hilfe / verfügbare Flags
+
+```
+./brautomat-telegraf-gui --help
+```
+
+zeigt eine kurze Beschreibung des Programms sowie alle verfügbaren Flags
+(`--templates-dir`, `--config`, `--export-templates`). Derselbe Hilfetext
+erscheint automatisch auch bei einem ungültigen oder unbekannten Flag
+bzw. Argument (Exit-Code 2 statt 0 in dem Fall) - man muss sich die
+Optionen also nicht separat merken.
+
 ## Templates: eingebettet vs. benutzerdefiniert
 
 Die Standard-Templates liegen unter `internal/config/templates/*.tmpl` und

@@ -5,7 +5,7 @@ Kontext für Claude Code zu diesem Projekt. Bitte vor größeren Änderungen les
 ## Was ist das
 
 Ein minimaler Wails-v2-Desktop-Wrapper (Go-Backend, schlichtes HTML/JS-Frontend
-ohne Build-Tool) für Telegraf. Zweck: Ein Braureaktor stellt unter
+ohne Build-Tool) für Telegraf. Zweck: Ein Gerät namens Brautomat stellt unter
 `http://<host>/telemetry` alle paar Sekunden einen JSON-Messpunkt bereit.
 Der Wrapper hat ein Formular, aus dem eine Telegraf-Config generiert wird,
 und startet/stoppt den Telegraf-Prozess als Kindprozess. Telegraf selbst
@@ -19,7 +19,7 @@ mitgelieferten `telegraf`-Binary in `bin/`.
 ## Architektur (wichtig für Änderungen)
 
 ```
-main.go                    Flag-Parsing (--templates-dir, --config, --export-templates), embed der frontend/-Assets, wails.Run()
+main.go                    Flag-Parsing (--templates-dir, --config, --export-templates), printUsage() als flag.Usage (deckt --help/-h UND ungültige Flags/Argumente ab), embed der frontend/-Assets, wails.Run()
 app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
@@ -92,11 +92,20 @@ sinnvollste Einstiegspunkt.
 
 ## Konventionen / worauf beim Ändern zu achten ist
 
-- **Neues Ausgabeziel hinzufügen** (z. B. MQTT): 
+- **Neues CLI-Flag hinzufügen**: reicht i.d.R. eine `flag.String/Bool/...`-
+  Definition in `main()` mit gutem, mehrzeiligem Usage-Text (Konvention:
+  `"\n"+` verkettete Strings wie bei den bestehenden Flags) - taucht dann
+  automatisch in `--help` auf, da `printUsage()` am Ende `flag.PrintDefaults()`
+  aufruft. Der einleitende Beschreibungstext in `printUsage()` muss nur
+  angepasst werden, wenn sich das grundsätzliche Verwendungsmuster des
+  Programms ändert, nicht bei jedem neuen Flag.
+
+- **Neues Ausgabeziel hinzufügen** (z. B. ein weiteres, hier noch nicht
+  genanntes Ziel):
   1. Neues Template unter `internal/config/templates/outputs-<name>.conf.tmpl` anlegen
   2. Passendes Feld in `Config` (config.go) ergänzen (JSON-Tag beachten)
   3. Eintrag in der `targets`-Liste in `generator.go` (`Generate()`) ergänzen
-  4. Neuen Tab-Button + Tab-Panel in `frontend/index.html` ergänzen (gleiches Muster wie CSV/InfluxDB/Postgres/MySQL: `data-tab`/`data-tab-panel`, Checkbox mit Klasse `enable-toggle`)
+  4. Neuen Tab-Button + Tab-Panel in `frontend/index.html` ergänzen (gleiches Muster wie CSV/InfluxDB/Postgres/MySQL/MQTT: `data-tab`/`data-tab-panel`, Checkbox mit Klasse `enable-toggle`)
   5. Neuen Eintrag in `enabledCheckboxIdByTab` in `tabs.js` ergänzen, damit der Enabled-Indikator auch für das neue Ziel funktioniert
   6. `collectConfig()`/`applyConfig()` in `main.js` ergänzen
   7. `requiredTemplateFiles` in `templates.go` erweitern, damit `--templates-dir`-Validierung greift
