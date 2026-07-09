@@ -48,6 +48,24 @@ brautomat-telegraf-gui/
   und schreibt den kompletten aktuellen Inhalt des Log-Fensters als
   Textdatei (`SaveLog` in `app.go`).
 
+## Log-Level für Wails-Konsolenausgaben
+
+```
+./brautomat-telegraf-gui --log-level debug
+```
+
+Steuert, ab welcher Schwere Wails-eigene Meldungen (Fenster-Lifecycle,
+IPC-Bindings, interne Fehler etc.) auf der Konsole ausgegeben werden.
+Gültige Werte: `trace`, `debug`, `info` (Default), `warning`, `error`
+(Groß-/Kleinschreibung egal, `warn` als Alias für `warning`). Ein
+ungültiger Wert zeigt - wie bei den anderen Flags - den Hilfetext und
+beendet das Programm mit Exit-Code 2.
+
+Das betrifft ausschließlich die Wails-Konsolenausgabe, **nicht** die
+Telegraf-Ausgabe im Log-Fenster der GUI - die wird unabhängig vom
+Log-Level immer vollständig angezeigt (siehe `telegraf:log`-Event in
+`app.go`).
+
 ## Hilfe / verfügbare Flags
 
 ```

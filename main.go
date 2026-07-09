@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 
@@ -53,6 +54,30 @@ Flags:
 	flag.PrintDefaults()
 }
 
+// validLogLevels in der Reihenfolge steigender Schwere - wird sowohl für
+// die Validierung als auch für die Fehlermeldung/Hilfetext verwendet.
+var validLogLevels = []string{"trace", "debug", "info", "warning", "error"}
+
+// parseLogLevel wandelt den Wert von --log-level in den von Wails
+// erwarteten logger.LogLevel-Typ um. Groß-/Kleinschreibung ist egal;
+// "warn" wird als Alias für "warning" akzeptiert.
+func parseLogLevel(s string) (logger.LogLevel, error) {
+	switch strings.ToLower(s) {
+	case "trace":
+		return logger.TRACE, nil
+	case "debug":
+		return logger.DEBUG, nil
+	case "info":
+		return logger.INFO, nil
+	case "warning", "warn":
+		return logger.WARNING, nil
+	case "error":
+		return logger.ERROR, nil
+	default:
+		return logger.INFO, fmt.Errorf("ungültiges Log-Level %q (gültig: %s)", s, strings.Join(validLogLevels, ", "))
+	}
+}
+
 func main() {
 	flag.Usage = printUsage
 
@@ -82,6 +107,16 @@ func main() {
 			"--templates-dir (bzw. dem Templates-Feld in der GUI) eigene\n"+
 			"Templates zu verwenden.",
 	)
+	logLevel := flag.String(
+		"log-level",
+		"info",
+		"Legt fest, ab welcher Schwere Wails-eigene Log-Meldungen (Start/Stop\n"+
+			"von Fenstern, IPC-Bindings etc.) auf der Konsole ausgegeben werden.\n"+
+			"Gültige Werte: trace, debug, info, warning, error (Groß-/\n"+
+			"Kleinschreibung egal). Betrifft nicht die telegraf-Ausgabe im\n"+
+			"Log-Fenster der GUI, die immer vollständig angezeigt wird.\n"+
+			"Default: info.",
+	)
 	flag.Parse()
 
 	// flag.Parse() meldet nur ungültige *Flags* selbstständig (siehe
@@ -91,6 +126,13 @@ func main() {
 	// ungültiges Flag: Fehlermeldung, Hilfetext, Exit-Code 2.
 	if args := flag.Args(); len(args) > 0 {
 		fmt.Fprintf(flag.CommandLine.Output(), "Unbekanntes Argument: %s\n\n", strings.Join(args, " "))
+		flag.Usage()
+		os.Exit(2)
+	}
+
+	parsedLogLevel, err := parseLogLevel(*logLevel)
+	if err != nil {
+		fmt.Fprintf(flag.CommandLine.Output(), "%v\n\n", err)
 		flag.Usage()
 		os.Exit(2)
 	}
@@ -119,8 +161,14 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		OnStartup:  app.startup,
-		OnShutdown: app.shutdown,
+		// LogLevel gilt für Entwicklungs-Builds, LogLevelProduction für
+		// mit "wails build" gebaute Binaries - beide auf denselben Wert
+		// aus --log-level setzen, damit das Flag unabhängig von der
+		// Build-Art funktioniert.
+		LogLevel:           parsedLogLevel,
+		LogLevelProduction: parsedLogLevel,
+		OnStartup:          app.startup,
+		OnShutdown:         app.shutdown,
 		Bind: []interface{}{
 			app,
 		},

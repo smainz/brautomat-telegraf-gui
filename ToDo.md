@@ -7,8 +7,7 @@
   gleich startet, ohne die GUI anzuzeigen. Dabei soll der telegraf Prozess
   in der Konfiguration gestartet werden, die eingelesen wurde. Was passiert, wenn
   keine Passwörter gespeichert sind, überlege ich mir später.
-- Flag für Log-Level hinzufügen, mit dem festgelegt werden kann, welche wails Log-Meldungen
-  auf der Konsole ausgegeben werden.
+
 
 ## Done
 - `--config` Flag einbauen
@@ -21,3 +20,5 @@
 - Füge ein '--help' Flag hizu. Falls ein ungültiges Flag / Kommando in der cli angegeben wird, zeige den Hilfetext ebenfalls. Der Hilfetext oll nicht nur die Flags / cli Kommandos erklären, sondern auch kurz die Verwendung des Programms.
 - Füge einen Button ein, mit dem man den Inhalt des Ausgabefensters löschen kann
 - Füge einen Button ein, mit de man den Inhalt des Ausgabefensters speichern kann
+- Flag für Log-Level hinzufügen, mit dem festgelegt werden kann, welche wails Log-Meldungen
+  auf der Konsole ausgegeben werden.

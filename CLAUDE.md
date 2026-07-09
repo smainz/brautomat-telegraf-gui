@@ -19,7 +19,7 @@ mitgelieferten `telegraf`-Binary in `bin/`.
 ## Architektur (wichtig für Änderungen)
 
 ```
-main.go                    Flag-Parsing (--templates-dir, --config, --export-templates), printUsage() als flag.Usage (deckt --help/-h UND ungültige Flags/Argumente ab), embed der frontend/-Assets, wails.Run()
+main.go                    Flag-Parsing (--templates-dir, --config, --export-templates, --log-level), printUsage() als flag.Usage (deckt --help/-h UND ungültige Flags/Argumente ab), embed der frontend/-Assets, wails.Run()
 app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseSaveLogPath, SaveLog
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
@@ -99,6 +99,13 @@ sinnvollste Einstiegspunkt.
   aufruft. Der einleitende Beschreibungstext in `printUsage()` muss nur
   angepasst werden, wenn sich das grundsätzliche Verwendungsmuster des
   Programms ändert, nicht bei jedem neuen Flag.
+
+- **`--log-level` steuert nur die Wails-eigene Konsolenausgabe**
+  (`options.App.LogLevel`/`LogLevelProduction`, siehe `parseLogLevel()`
+  in `main.go`), nicht die Telegraf-Ausgabe im Log-Fenster der GUI - die
+  läuft komplett separat über das `telegraf:log`-Event (`app.go`,
+  `process.Runner`) und wird nie gefiltert. Bei Verwechslungsgefahr in
+  Doku/Code bitte diese Trennung explizit machen.
 
 - **Neues Ausgabeziel hinzufügen** (z. B. ein weiteres, hier noch nicht
   genanntes Ziel):
