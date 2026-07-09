@@ -21,36 +21,43 @@
   <section class="panel targets">
     <h2>Ziele (wahlweise aktivierbar)</h2>
 
-    <fieldset>
-      <legend><label><input type="checkbox" id="csvEnabled" /> CSV-Datei</label></legend>
-      <label>Pfad <input id="csvPath" type="text" placeholder="brautomat.csv" /></label>
-    </fieldset>
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="csv" role="tab" aria-selected="true">CSV-Datei</button>
+      <button class="tab-btn" data-tab="influx" role="tab" aria-selected="false">InfluxDB v2</button>
+      <button class="tab-btn" data-tab="pg" role="tab" aria-selected="false">PostgreSQL</button>
+      <button class="tab-btn" data-tab="my" role="tab" aria-selected="false">MariaDB / MySQL</button>
+    </div>
 
-    <fieldset>
-      <legend><label><input type="checkbox" id="influxEnabled" /> InfluxDB v2</label></legend>
+    <div class="tab-panel active" data-tab-panel="csv">
+      <label class="enable-toggle"><input type="checkbox" id="csvEnabled" /> Ziel aktivieren</label>
+      <label>Pfad <input id="csvPath" type="text" placeholder="brautomat.csv" /></label>
+    </div>
+
+    <div class="tab-panel" data-tab-panel="influx">
+      <label class="enable-toggle"><input type="checkbox" id="influxEnabled" /> Ziel aktivieren</label>
       <label>URL <input id="influxUrl" type="text" placeholder="http://localhost:8086" /></label>
       <label>Token <input id="influxToken" type="password" /></label>
       <label>Organisation <input id="influxOrg" type="text" /></label>
       <label>Bucket <input id="influxBucket" type="text" /></label>
-    </fieldset>
+    </div>
 
-    <fieldset>
-      <legend><label><input type="checkbox" id="pgEnabled" /> PostgreSQL</label></legend>
+    <div class="tab-panel" data-tab-panel="pg">
+      <label class="enable-toggle"><input type="checkbox" id="pgEnabled" /> Ziel aktivieren</label>
       <label>Host <input id="pgHost" type="text" /></label>
       <label>Port <input id="pgPort" type="text" placeholder="5432" /></label>
       <label>Datenbank <input id="pgDatabase" type="text" /></label>
       <label>Benutzer <input id="pgUser" type="text" /></label>
       <label>Passwort <input id="pgPassword" type="password" /></label>
-    </fieldset>
+    </div>
 
-    <fieldset>
-      <legend><label><input type="checkbox" id="myEnabled" /> MariaDB / MySQL</label></legend>
+    <div class="tab-panel" data-tab-panel="my">
+      <label class="enable-toggle"><input type="checkbox" id="myEnabled" /> Ziel aktivieren</label>
       <label>Host <input id="myHost" type="text" /></label>
       <label>Port <input id="myPort" type="text" placeholder="3306" /></label>
       <label>Datenbank <input id="myDatabase" type="text" /></label>
       <label>Benutzer <input id="myUser" type="text" /></label>
       <label>Passwort <input id="myPassword" type="password" /></label>
-    </fieldset>
+    </div>
   </section>
 
   <section class="panel controls">
@@ -71,6 +78,7 @@
     <pre id="log"></pre>
   </section>
 
+  <script src="./src/tabs.js" type="module"></script>
   <script src="./src/main.js" type="module"></script>
 </body>
 </html>

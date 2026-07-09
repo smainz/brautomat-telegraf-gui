@@ -19,6 +19,46 @@ input[type="text"], input[type="password"] {
   box-sizing: border-box;
 }
 fieldset { border: 1px solid #333; border-radius: 4px; margin-bottom: 0.6rem; }
+
+.tabs {
+  display: flex;
+  gap: 0.3rem;
+  border-bottom: 1px solid #444;
+  margin-bottom: 0.8rem;
+}
+.tab-btn {
+  position: relative;
+  background: transparent;
+  color: #bbb;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 4px 4px 0 0;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.tab-btn:hover { background: #2a2a2a; color: #eee; }
+.tab-btn.active { color: #eee; border-bottom-color: #3a7; }
+.tab-btn.target-enabled::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #3a7;
+  margin-right: 0.4rem;
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.enable-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+.enable-toggle input[type="checkbox"] { width: auto; }
+
 .controls { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
 #configPath { font-size: 0.75rem; color: #999; font-family: monospace; }
 button {

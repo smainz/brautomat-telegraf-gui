@@ -29,9 +29,10 @@ brautomat-telegraf-gui/
 │       ├── process_unix.go          # SIGTERM/SIGKILL, Prozessgruppen (Linux/macOS)
 │       └── process_windows.go       # Kill() (Windows)
 ├── frontend/
-│   ├── index.html                   # Formular + Log-Fenster
+│   ├── index.html                   # Formular (Ziele als Tabs) + Log-Fenster
 │   └── src/
-│       ├── main.js                  # Formular auslesen, Start/Stop, Events anzeigen
+│       ├── main.js                  # Formular auslesen, Start/Stop, Speichern/Laden, Events anzeigen
+│       ├── tabs.js                  # Reine UI-Logik: Tab-Umschaltung + Enabled-Indikator pro Ziel-Tab
 │       └── style.css
 └── bin/                              # Hier die telegraf-Binary pro Zielplattform ablegen
 ```

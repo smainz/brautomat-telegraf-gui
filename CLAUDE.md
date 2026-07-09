@@ -32,7 +32,8 @@ internal/process/
   process_unix.go             Prozessgruppen + SIGTERM/SIGKILL (build tag: !windows)
   process_windows.go          cmd.Process.Kill() (build tag: windows)
 frontend/
-  index.html + src/main.js    Formular + Log-Fenster, ruft generierte wailsjs-Bindings auf
+  index.html + src/main.js    Formular (Ziele als Tabs) + Log-Fenster, ruft generierte wailsjs-Bindings auf
+  src/tabs.js                 Reine UI-Logik: Tab-Umschaltung, unabhängig von main.js
 bin/                          Hier liegt (nach Download) die telegraf-Binary pro Zielplattform
 ```
 
@@ -88,8 +89,10 @@ sinnvollste Einstiegspunkt.
   1. Neues Template unter `internal/config/templates/outputs-<name>.conf.tmpl` anlegen
   2. Passendes Feld in `Config` (config.go) ergänzen (JSON-Tag beachten)
   3. Eintrag in der `targets`-Liste in `generator.go` (`Generate()`) ergänzen
-  4. Formular-Fieldset in `frontend/index.html` + `collectConfig()`/`applyDefaults()` in `main.js` ergänzen
-  5. `requiredTemplateFiles` in `templates.go` erweitern, damit `--templates-dir`-Validierung greift
+  4. Neuen Tab-Button + Tab-Panel in `frontend/index.html` ergänzen (gleiches Muster wie CSV/InfluxDB/Postgres/MySQL: `data-tab`/`data-tab-panel`, Checkbox mit Klasse `enable-toggle`)
+  5. Neuen Eintrag in `enabledCheckboxIdByTab` in `tabs.js` ergänzen, damit der Enabled-Indikator auch für das neue Ziel funktioniert
+  6. `collectConfig()`/`applyConfig()` in `main.js` ergänzen
+  7. `requiredTemplateFiles` in `templates.go` erweitern, damit `--templates-dir`-Validierung greift
 
 - **Templates sind normale `text/template`-Dateien** mit Zugriff auf alle
   Felder von `config.Config` (z. B. `{{.InfluxDB.Bucket}}`). Nicht mit

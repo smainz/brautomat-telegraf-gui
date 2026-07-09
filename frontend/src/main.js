@@ -86,6 +86,11 @@ function applyConfig(cfg) {
   $('myDatabase').value = cfg.mysql?.database ?? '';
   $('myUser').value = cfg.mysql?.user ?? '';
   $('myPassword').value = cfg.mysql?.password ?? '';
+
+  // Checkboxen wurden hier programmatisch gesetzt, was kein "change"-Event
+  // auslöst. tabs.js hört auf dieses Event, um die Tab-Indikatoren
+  // (welche Ziele sind aktiviert) neu zu synchronisieren.
+  window.dispatchEvent(new Event('brautomat:config-applied'));
 }
 
 function appendLog(line) {
