@@ -177,7 +177,9 @@ Brautomat erreichbar zu haben.
   `hideErrorModal()` in `main.js`). Das Modal ist bewusst generisch
   gehalten - für künftige Fehlermeldungen, die ein Pop-up statt einer
   Logzeile verdienen, dieselben Funktionen wiederverwenden statt ein
-  neues Modal zu bauen. Wie sich `--start-headless`
+  neues Modal zu bauen.
+
+- **Offene Frage (noch nicht entschieden):** Wie sich `--start-headless`
   verhalten soll, wenn die geladene Konfiguration keine Passwörter enthält
   (weil "Passwörter speichern" beim letzten Speichern aus war) - aktuell
   startet telegraf einfach mit leeren Werten, ohne Warnung oder
