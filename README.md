@@ -50,6 +50,8 @@ Tags, eigene Agent-Optionen), startet die App mit:
 ./brautomat-telegraf-gui --templates-dir /pfad/zu/eigenen/templates
 ```
 
+(Kombinierbar mit `--config`, siehe Abschnitt "Konfiguration speichern/laden" unten.)
+
 Das Verzeichnis muss folgende Dateien enthalten (gleiche Namen wie die
 Standard-Templates):
 
@@ -72,20 +74,31 @@ auf alle Felder von `config.Config` (z. B. `{{.DeviceURL}}`,
 Das Formular kann als JSON gespeichert und wieder geladen werden:
 
 - **Speichern**: schreibt unter den zuletzt verwendeten Pfad (beim
-  allerersten Mal der Standardpfad).
+  allerersten Mal der effektive Standardpfad, siehe unten).
 - **Speichern unter…**: öffnet einen nativen Dateidialog, damit ein
   beliebiger Pfad gewählt werden kann.
 - **Laden…**: öffnet einen nativen Dateidialog zum Öffnen einer
   bestehenden `config.json`.
 
-Der Standardpfad ist plattformübergreifend `~/.brautomat-telegraf-gui/config.json`
-(unter Windows entsprechend `%USERPROFILE%\.brautomat-telegraf-gui\config.json`,
-ermittelt über `os.UserHomeDir()` in `internal/config/persistence.go`).
-Fehlende Verzeichnisse werden beim Speichern automatisch angelegt.
+Beim Programmstart wird automatisch versucht, die Konfiguration vom
+effektiven Standardpfad zu laden; existiert dort keine Datei, wird
+stattdessen `config.Default()` verwendet (kein Fehler).
 
-Die App lädt diese Datei beim Start automatisch; existiert sie noch
-nicht, wird stattdessen `config.Default()` verwendet (kein Fehler, siehe
-`LoadConfig` in `app.go`).
+Der **effektive Standardpfad** ergibt sich in dieser Reihenfolge:
+
+1. `--config <pfad>` beim Programmstart, falls gesetzt
+2. sonst plattformübergreifend `~/.brautomat-telegraf-gui/config.json`
+   (unter Windows entsprechend `%USERPROFILE%\.brautomat-telegraf-gui\config.json`,
+   ermittelt über `os.UserHomeDir()` in `internal/config/persistence.go`)
+
+```
+./brautomat-telegraf-gui --config /pfad/zu/meiner/config.json
+```
+
+Das ist z. B. nützlich, um mehrere Geräte/Profile mit unterschiedlichen
+Konfigurationsdateien zu betreiben, ohne jedes Mal manuell "Laden…"
+anklicken zu müssen. Fehlende Verzeichnisse werden beim Speichern
+automatisch angelegt.
 
 **Hinweis:** Da die Konfiguration ggf. Klartext-Zugangsdaten enthält
 (DB-Passwörter, InfluxDB-Token), wird die Datei mit den Rechten `0600`

@@ -15,17 +15,19 @@ import (
 // App ist an das Frontend gebunden (siehe main.go: options.App.Bind).
 // Alle exportierten Methoden sind aus JavaScript aufrufbar.
 type App struct {
-	ctx          context.Context
-	templatesDir string // Wert von --templates-dir; leer = eingebettete Defaults verwenden
-	workDir      string // temporäres Verzeichnis für generierte telegraf.conf / telegraf.d
-	telegrafPath string // Pfad zur telegraf-Binary
-	runner       *process.Runner
+	ctx            context.Context
+	templatesDir   string // Wert von --templates-dir; leer = eingebettete Defaults verwenden
+	configPathFlag string // Wert von --config; leer = ~/.brautomat-telegraf-gui/config.json verwenden
+	workDir        string // temporäres Verzeichnis für generierte telegraf.conf / telegraf.d
+	telegrafPath   string // Pfad zur telegraf-Binary
+	runner         *process.Runner
 }
 
-func NewApp(templatesDir string) *App {
+func NewApp(templatesDir, configPath string) *App {
 	return &App{
-		templatesDir: templatesDir,
-		runner:       process.NewRunner(),
+		templatesDir:   templatesDir,
+		configPathFlag: configPath,
+		runner:         process.NewRunner(),
 	}
 }
 
@@ -44,6 +46,9 @@ func (a *App) startup(ctx context.Context) {
 	runtime.LogInfof(ctx, "telegraf-Binary: %s", a.telegrafPath)
 	if a.templatesDir != "" {
 		runtime.LogInfof(ctx, "Benutzerdefinierte Templates: %s", a.templatesDir)
+	}
+	if resolvedConfigPath, err := a.resolveConfigPath(""); err == nil {
+		runtime.LogInfof(ctx, "Konfigurationsdatei: %s", resolvedConfigPath)
 	}
 }
 
@@ -64,11 +69,11 @@ func (a *App) GetDefaults() TelegrafConfig {
 	return config.Default()
 }
 
-// GetDefaultConfigPath liefert den Standardpfad, unter dem die
-// Konfiguration gespeichert/geladen wird, wenn kein eigener Pfad gewählt
-// wurde: ~/.brautomat-telegraf-gui/config.json
+// GetDefaultConfigPath liefert den effektiv verwendeten Pfad für die
+// Konfiguration: das per --config gesetzte Flag, falls vorhanden, sonst
+// den Standardpfad ~/.brautomat-telegraf-gui/config.json.
 func (a *App) GetDefaultConfigPath() (string, error) {
-	return config.DefaultConfigPath()
+	return a.resolveConfigPath("")
 }
 
 // SaveConfig speichert cfg als JSON. Ist path leer, wird der Standardpfad
@@ -106,9 +111,17 @@ func (a *App) LoadConfig(path string) (TelegrafConfig, error) {
 	return cfg, nil
 }
 
+// resolveConfigPath bestimmt den tatsächlich zu verwendenden
+// Konfigurationspfad, in dieser Prioritätsreihenfolge:
+//  1. explizit übergebener path (z.B. vom "Speichern unter..."-Dialog)
+//  2. --config Flag beim Programmstart
+//  3. Standardpfad ~/.brautomat-telegraf-gui/config.json
 func (a *App) resolveConfigPath(path string) (string, error) {
 	if path != "" {
 		return path, nil
+	}
+	if a.configPathFlag != "" {
+		return a.configPathFlag, nil
 	}
 	return config.DefaultConfigPath()
 }
@@ -117,14 +130,14 @@ func (a *App) resolveConfigPath(path string) (string, error) {
 // liefert den vom Benutzer gewählten Pfad zurück. Bricht der Benutzer ab,
 // wird ein leerer String ohne Fehler zurückgegeben.
 func (a *App) ChooseSaveConfigPath() (string, error) {
-	defaultPath, err := config.DefaultConfigPath()
+	suggestedPath, err := a.resolveConfigPath("")
 	if err != nil {
 		return "", err
 	}
 	return runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		Title:            "Konfiguration speichern unter",
-		DefaultDirectory: filepath.Dir(defaultPath),
-		DefaultFilename:  filepath.Base(defaultPath),
+		DefaultDirectory: filepath.Dir(suggestedPath),
+		DefaultFilename:  filepath.Base(suggestedPath),
 		Filters: []runtime.FileFilter{
 			{DisplayName: "JSON-Dateien (*.json)", Pattern: "*.json"},
 		},
@@ -135,13 +148,13 @@ func (a *App) ChooseSaveConfigPath() (string, error) {
 // den vom Benutzer gewählten Pfad zurück. Bricht der Benutzer ab, wird
 // ein leerer String ohne Fehler zurückgegeben.
 func (a *App) ChooseOpenConfigPath() (string, error) {
-	defaultPath, err := config.DefaultConfigPath()
+	suggestedPath, err := a.resolveConfigPath("")
 	if err != nil {
 		return "", err
 	}
 	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title:            "Konfiguration öffnen",
-		DefaultDirectory: filepath.Dir(defaultPath),
+		DefaultDirectory: filepath.Dir(suggestedPath),
 		Filters: []runtime.FileFilter{
 			{DisplayName: "JSON-Dateien (*.json)", Pattern: "*.json"},
 		},

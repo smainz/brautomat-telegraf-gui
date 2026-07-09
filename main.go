@@ -28,6 +28,14 @@ func main() {
 			"outputs-mysql.conf.tmpl enthalten. Wird nichts angegeben,\n"+
 			"werden die im Programm eingebetteten Standard-Templates verwendet.",
 	)
+	configPath := flag.String(
+		"config",
+		"",
+		"Pfad zur Konfigurationsdatei (JSON), die beim Start geladen wird,\n"+
+			"falls sie existiert, und auf die sich 'Speichern' im Formular\n"+
+			"standardmäßig bezieht. Wird nichts angegeben, wird\n"+
+			"~/.brautomat-telegraf-gui/config.json verwendet.",
+	)
 	flag.Parse()
 
 	// "frontend" als Wurzel des Asset-Servers verwenden, damit
@@ -37,7 +45,7 @@ func main() {
 		log.Fatalf("Frontend-Assets konnten nicht geladen werden: %v", err)
 	}
 
-	app := NewApp(*templatesDir)
+	app := NewApp(*templatesDir, *configPath)
 
 	err = wails.Run(&options.App{
 		Title:  "Brautomat Telegraf Wrapper",

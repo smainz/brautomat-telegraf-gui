@@ -19,8 +19,8 @@ mitgelieferten `telegraf`-Binary in `bin/`.
 ## Architektur (wichtig für Änderungen)
 
 ```
-main.go                    Flag-Parsing (--templates-dir), embed der frontend/-Assets, wails.Run()
-app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults
+main.go                    Flag-Parsing (--templates-dir, --config), embed der frontend/-Assets, wails.Run()
+app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
   templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
@@ -48,6 +48,17 @@ bin/                          Hier liegt (nach Download) die telegraf-Binary pro
 gelöscht (siehe `Generate()` in `generator.go`), da Telegraf jede `.conf`-Datei
 im Verzeichnis liest – sonst würde ein zuvor aktiviertes Ziel weiterlaufen,
 obwohl der Benutzer es im Formular abgewählt hat.
+
+**Auflösung des Konfigurationspfads** (`resolveConfigPath` in `app.go`),
+in dieser Priorität:
+1. explizit übergebener Pfad (z.B. aus dem "Speichern unter…"-Dialog)
+2. `--config <pfad>` beim Programmstart (`a.configPathFlag`)
+3. `config.DefaultConfigPath()` = `~/.brautomat-telegraf-gui/config.json`
+
+Wird dieselbe Logik in `GetDefaultConfigPath()`, `SaveConfig()`,
+`LoadConfig()` sowie als Vorschlagswert in beiden Dateidialogen
+verwendet – bei Änderungen an der Priorisierung bitte alle Stellen im
+Blick behalten, da sie bewusst konsistent sein sollen.
 
 ## Build & Test
 
