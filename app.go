@@ -2,9 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -140,6 +145,54 @@ func (a *App) resolveConfigPath(path string) (string, error) {
 		return a.configPathFlag, nil
 	}
 	return config.DefaultConfigPath()
+}
+
+// deviceTestTimeout begrenzt, wie lange "Testen" auf eine Antwort des
+// Geräts wartet, damit der Button nicht endlos hängt, wenn das Gerät
+// nicht erreichbar ist.
+const deviceTestTimeout = 5 * time.Second
+
+// TestDeviceConnection prüft, ob unter deviceURL + "/telemetry" ein
+// plausibler Messpunkt abrufbar ist. Liefert nil bei Erfolg; der Fehler
+// bei Misserfolg ist bewusst als für Menschen verständlicher Text
+// formuliert, da das Frontend ihn direkt in einem Pop-up anzeigt.
+func (a *App) TestDeviceConnection(deviceURL string) error {
+	deviceURL = strings.TrimSpace(deviceURL)
+	if deviceURL == "" {
+		return fmt.Errorf("keine Geräte-URL angegeben")
+	}
+
+	parsed, err := url.Parse(deviceURL)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return fmt.Errorf("ungültige URL %q (Format z.B. http://brautomat.local)", deviceURL)
+	}
+
+	telemetryURL := strings.TrimSuffix(deviceURL, "/") + "/telemetry"
+
+	client := http.Client{Timeout: deviceTestTimeout}
+	resp, err := client.Get(telemetryURL)
+	if err != nil {
+		return fmt.Errorf("Verbindung zu %s fehlgeschlagen: %w", telemetryURL, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%s antwortete mit Status %s (erwartet: 200 OK)", telemetryURL, resp.Status)
+	}
+
+	var payload map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return fmt.Errorf("Antwort von %s ist kein gültiges JSON: %w", telemetryURL, err)
+	}
+
+	// Grober Plausibilitätscheck statt vollständiger Schema-Validierung:
+	// das Feld "t" (Device-Unixzeit) sollte in jedem echten Messpunkt
+	// vorhanden sein.
+	if _, ok := payload["t"]; !ok {
+		return fmt.Errorf("Antwort von %s enthält kein Feld \"t\" - ist das wirklich der Brautomat-Telemetrie-Endpunkt?", telemetryURL)
+	}
+
+	return nil
 }
 
 // ChooseSaveConfigPath öffnet einen nativen "Speichern unter"-Dialog und

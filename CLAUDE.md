@@ -20,7 +20,7 @@ mitgelieferten `telegraf`-Binary in `bin/`.
 
 ```
 main.go                    Flag-Parsing (--templates-dir, --config, --export-templates, --log-level, --start-headless), printUsage() als flag.Usage (deckt --help/-h UND ungültige Flags/Argumente ab), runHeadless() für --start-headless, embed der frontend/-Assets, wails.Run()
-app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseExportTemplatesDir, ExportTemplates, ChooseSaveLogPath, SaveLog. Intern (nicht gebunden): startTelegrafCore(), initRuntimeState() - ctx-frei, auch vom Headless-Modus genutzt (siehe main.go)
+app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseExportTemplatesDir, ExportTemplates, ChooseSaveLogPath, SaveLog, TestDeviceConnection. Intern (nicht gebunden): startTelegrafCore(), initRuntimeState() - ctx-frei, auch vom Headless-Modus genutzt (siehe main.go)
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
   templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
@@ -168,7 +168,16 @@ Brautomat erreichbar zu haben.
   die Sicherheitshinweise in `README.md` beachten (Secret-Store,
   OS-Keychain).
 
-- **Offene Frage (noch nicht entschieden):** Wie sich `--start-headless`
+- **"Testen"-Button/Verbindungstest** (`TestDeviceConnection` in `app.go`):
+  führt einen echten HTTP-GET gegen `<deviceUrl>/telemetry` aus (Timeout
+  `deviceTestTimeout`, aktuell 5s) und liefert bei Erfolg `nil`, sonst
+  einen für Menschen lesbaren Fehlertext. Das Frontend zeigt Erfolg
+  inline neben dem Button, Fehler im generischen Pop-up-Modal
+  (`#errorModalOverlay` in `index.html`, `showErrorModal()`/
+  `hideErrorModal()` in `main.js`). Das Modal ist bewusst generisch
+  gehalten - für künftige Fehlermeldungen, die ein Pop-up statt einer
+  Logzeile verdienen, dieselben Funktionen wiederverwenden statt ein
+  neues Modal zu bauen. Wie sich `--start-headless`
   verhalten soll, wenn die geladene Konfiguration keine Passwörter enthält
   (weil "Passwörter speichern" beim letzten Speichern aus war) - aktuell
   startet telegraf einfach mit leeren Werten, ohne Warnung oder

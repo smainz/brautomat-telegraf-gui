@@ -45,9 +45,11 @@ brautomat-telegraf-gui/
 
 Die GUI ist in zwei Top-Level-Tabs aufgeteilt:
 
-- **Main**: Geräte-URL/Abrufintervall, Start/Stop, Ausgabefenster (mit
-  "Ausgabe leeren"/"Ausgabe speichern…" darunter). Das ist der Tab für
-  den laufenden Betrieb.
+- **Main**: Geräte-URL/Abrufintervall (mit **"Testen"**-Button, der
+  einen echten Request gegen `<Geräte-URL>/telemetry` ausführt - Erfolg
+  wird inline angezeigt, ein Fehler öffnet ein Pop-up mit der Ursache),
+  Start/Stop, Ausgabefenster (mit "Ausgabe leeren"/"Ausgabe speichern…"
+  darunter). Das ist der Tab für den laufenden Betrieb.
 - **Konfiguration**: alles, was seltener angefasst wird, in dieser
   Reihenfolge: Ziele (CSV/InfluxDB/PostgreSQL/MySQL/MQTT als
   Unter-Tabs), Templates-Konfiguration, Konfiguration speichern/laden.

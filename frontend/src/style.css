@@ -102,6 +102,33 @@ input:disabled, button:disabled { opacity: 0.5; }
   font-size: 0.75rem;
 }
 
+.test-success { color: #3a7; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal {
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  max-width: 440px;
+  width: 90%;
+}
+.modal h3 { margin-top: 0; color: #e66; font-size: 1rem; }
+.modal p {
+  font-size: 0.85rem;
+  color: #ddd;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
 
 .controls { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-top: 0.6rem; }
 .log-controls { margin-top: 0.6rem; margin-bottom: 0; }

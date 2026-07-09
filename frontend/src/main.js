@@ -16,6 +16,7 @@ import {
   ExportTemplates,
   ChooseSaveLogPath,
   SaveLog,
+  TestDeviceConnection,
   GetDefaultConfigPath,
 } from '../wailsjs/go/main/App.js';
 import { EventsOn } from '../wailsjs/runtime/runtime.js';
@@ -149,6 +150,18 @@ function showConfigPath(path) {
   $('configPath').textContent = path;
 }
 
+// Einfaches Pop-up für Fehlermeldungen, z.B. beim fehlgeschlagenen
+// Verbindungstest. Schließen per Button, Klick auf den abgedunkelten
+// Hintergrund oder Escape.
+function showErrorModal(message) {
+  $('errorModalMessage').textContent = message;
+  $('errorModalOverlay').classList.remove('hidden');
+}
+
+function hideErrorModal() {
+  $('errorModalOverlay').classList.add('hidden');
+}
+
 // Blendet den Bereich mit Pfad-Textfeld, "Durchsuchen…" und
 // "Templates exportieren…" komplett aus, solange "Eigene Templates
 // verwenden" nicht angehakt ist - nicht nur deaktiviert, sondern
@@ -182,6 +195,31 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   EventsOn('telegraf:log', appendLog);
   EventsOn('telegraf:status', (status) => setRunning(status === 'running'));
+
+  $('errorModalCloseBtn').addEventListener('click', hideErrorModal);
+  $('errorModalOverlay').addEventListener('click', (event) => {
+    if (event.target === $('errorModalOverlay')) hideErrorModal();
+  });
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') hideErrorModal();
+  });
+
+  $('testDeviceBtn').addEventListener('click', async () => {
+    const result = $('testDeviceResult');
+    result.textContent = 'Teste Verbindung…';
+    result.classList.remove('test-success');
+    $('testDeviceBtn').disabled = true;
+    try {
+      await TestDeviceConnection($('deviceUrl').value);
+      result.textContent = '✓ Verbindung erfolgreich - Telemetrie-Endpunkt antwortet.';
+      result.classList.add('test-success');
+    } catch (err) {
+      result.textContent = '';
+      showErrorModal(String(err));
+    } finally {
+      $('testDeviceBtn').disabled = false;
+    }
+  });
 
   $('customTemplatesEnabled').addEventListener('change', syncTemplatesDirState);
 

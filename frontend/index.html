@@ -19,8 +19,12 @@
     <section class="panel">
       <h2>Gerät</h2>
       <label>Geräte-URL
-        <input id="deviceUrl" type="text" placeholder="http://brautomat.local" />
+        <span class="path-row">
+          <input id="deviceUrl" type="text" placeholder="http://brautomat.local" />
+          <button id="testDeviceBtn" type="button">Testen</button>
+        </span>
       </label>
+      <p id="testDeviceResult" class="hint"></p>
       <label>Abrufintervall
         <input id="interval" type="text" placeholder="30s" />
       </label>
@@ -149,6 +153,16 @@
       </div>
     </section>
 
+  </div>
+
+  <div id="errorModalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>Verbindungstest fehlgeschlagen</h3>
+      <p id="errorModalMessage"></p>
+      <div class="controls">
+        <button id="errorModalCloseBtn">Schließen</button>
+      </div>
+    </div>
   </div>
 
   <script src="./src/tabs.js" type="module"></script>
