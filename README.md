@@ -35,8 +35,38 @@ brautomat-telegraf-gui/
 │       ├── main.js                  # Formular auslesen, Start/Stop, Speichern/Laden, Events anzeigen
 │       ├── tabs.js                  # Reine UI-Logik: Tab-Umschaltung + Enabled-Indikator pro Ziel-Tab
 │       └── style.css
-└── bin/                              # Hier die telegraf-Binary pro Zielplattform ablegen
+├── bin/                              # Hier die telegraf-Binary pro Zielplattform ablegen
+└── tools/
+    └── mock-server/
+        └── main.go                   # Eigenständiger Mock für /telemetry (Entwicklung ohne echtes Gerät)
 ```
+
+## Mock-Server für die Entwicklung
+
+Unter `tools/mock-server` liegt ein eigenständiger, minimaler Ersatz für
+ein echtes Brautomat-Gerät. Er beantwortet `GET /telemetry` mit
+demselben JSON-Format wie das echte Gerät, mit einem hochzählenden
+Zeitstempel und Werten, die sich von Aufruf zu Aufruf sichtbar verändern
+(Modus- und Rastschritt-Wechsel alle paar Ticks, Temperaturen nähern sich
+langsam mit etwas Rauschen ihrem jeweiligen Zielwert an). Die genaue
+Simulationslogik ist dabei bewusst simpel und nicht als realistisches
+Brauprofil gedacht.
+
+Start:
+
+```
+go run ./tools/mock-server
+```
+
+Optional ein anderer Port/Adresse:
+
+```
+go run ./tools/mock-server --addr :9090
+```
+
+Danach in der GUI als Geräte-URL `http://localhost:8080` (bzw. den
+gewählten Port) eintragen. Läuft komplett unabhängig von der Wails-App -
+kein `wails build`/`wails dev` nötig, nur `go run`.
 
 ## Ausgabe leeren/speichern
 

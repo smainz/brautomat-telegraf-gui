@@ -1,11 +1,12 @@
 # ToDo
 
-- Schreibe einen einfachen Mock-Server, der in der Entwicklung genutzt werden kann,
-  um die Daten abzugragen. Timestamp soll sich hochzählen, einige Werte sich verändern. Die genaue Systematik ist dabei irrelevant.
 - Ergänze einen Kommando `--start-headless`, dass nach dem Lesen der Konfiguration
   gleich startet, ohne die GUI anzuzeigen. Dabei soll der telegraf Prozess
   in der Konfiguration gestartet werden, die eingelesen wurde. Was passiert, wenn
   keine Passwörter gespeichert sind, überlege ich mir später.
+
+
+
 
 
 ## Done
@@ -22,3 +23,5 @@
 - Flag für Log-Level hinzufügen, mit dem festgelegt werden kann, welche wails Log-Meldungen
   auf der Konsole ausgegeben werden.
 - Füge einen Knopf zum exportieren der Templates hinzu
+- Schreibe einen einfachen Mock-Server, der in der Entwicklung genutzt werden kann,
+  um die Daten abzugragen. Timestamp soll sich hochzählen, einige Werte sich verändern. Die genaue Systematik ist dabei irrelevant.

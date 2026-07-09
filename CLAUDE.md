@@ -35,6 +35,8 @@ frontend/
   index.html + src/main.js    Formular (Ziele als Tabs) + Log-Fenster, ruft generierte wailsjs-Bindings auf
   src/tabs.js                 Reine UI-Logik: Tab-Umschaltung, unabhängig von main.js
 bin/                          Hier liegt (nach Download) die telegraf-Binary pro Zielplattform
+tools/
+  mock-server/main.go         Eigenständiger /telemetry-Mock für die Entwicklung (reines stdlib, kein Wails-Import)
 ```
 
 **Datenfluss beim Klick auf "Start":**
@@ -89,6 +91,13 @@ Es gibt aktuell keine automatisierten Tests. Falls welche ergänzt werden:
 `internal/config` (Template-Rendering) ist reines Go ohne Wails-Abhängigkeit
 und lässt sich problemlos mit `go test` isoliert testen – das wäre der
 sinnvollste Einstiegspunkt.
+
+**Ohne echtes Gerät entwickeln/testen:** `go run ./tools/mock-server`
+startet einen minimalen `/telemetry`-Mock (reines stdlib, kein Wails-Bezug,
+läuft unabhängig von `wails dev`/`wails build`). Danach in der GUI als
+Geräte-URL z.B. `http://localhost:8080` eintragen. Nützlich, um Start/Stop,
+Config-Rendering und alle Ziel-Tabs durchzutesten, ohne einen echten
+Brautomat erreichbar zu haben.
 
 ## Konventionen / worauf beim Ändern zu achten ist
 
