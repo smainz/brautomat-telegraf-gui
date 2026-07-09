@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"flag"
 	"fmt"
 	"io/fs"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
@@ -43,8 +45,9 @@ und/oder MQTT - je nachdem, welche Ziele im Formular aktiviert sind.
 
 Normalerweise wird das Programm ohne Flags gestartet und öffnet direkt
 die GUI. Die Flags unten passen das Startverhalten an bzw. ermöglichen
-einen CLI-only-Modus zum Exportieren der Standard-Templates, ohne dass
-dafür die GUI startet.
+CLI-only-Modi ohne GUI: Standard-Templates exportieren
+(--export-templates) oder telegraf direkt mit der eingelesenen
+Konfiguration starten (--start-headless).
 
 Verwendung:
   %s [Flags]
@@ -76,6 +79,55 @@ func parseLogLevel(s string) (logger.LogLevel, error) {
 	default:
 		return logger.INFO, fmt.Errorf("ungültiges Log-Level %q (gültig: %s)", s, strings.Join(validLogLevels, ", "))
 	}
+}
+
+// runHeadless liest die Konfiguration (gleiche Auflösung wie beim
+// normalen GUI-Start: --config bzw. Standardpfad) und startet telegraf
+// direkt damit, ohne jemals wails.Run() aufzurufen - es gibt also kein
+// Fenster und keinen a.ctx. Ausgabezeilen landen auf stdout statt als
+// Wails-Event. Blockiert, bis Ctrl+C gedrückt wird, und stoppt telegraf
+// dann sauber, bevor die Funktion zurückkehrt.
+func runHeadless(app *App) error {
+	if err := app.initRuntimeState(); err != nil {
+		return fmt.Errorf("Initialisierung fehlgeschlagen: %w", err)
+	}
+	defer app.shutdown(context.Background())
+
+	configPath, err := app.GetDefaultConfigPath()
+	if err != nil {
+		return fmt.Errorf("Konfigurationspfad konnte nicht ermittelt werden: %w", err)
+	}
+
+	cfg, err := app.LoadConfig("")
+	if err != nil {
+		return fmt.Errorf("Konfiguration konnte nicht geladen werden (%s): %w", configPath, err)
+	}
+	log.Printf("Konfiguration geladen: %s", configPath)
+
+	onLine := func(line string) {
+		fmt.Println(line)
+	}
+	onExit := func(err error) {
+		if err != nil {
+			log.Printf("telegraf beendet mit Fehler: %v", err)
+		} else {
+			log.Println("telegraf beendet")
+		}
+	}
+
+	if err := app.startTelegrafCore(cfg, onLine, onExit); err != nil {
+		return fmt.Errorf("telegraf konnte nicht gestartet werden: %w", err)
+	}
+	log.Println("telegraf läuft im Headless-Modus. Zum Beenden Ctrl+C drücken.")
+
+	// Auf Ctrl+C warten - os.Interrupt ist der einzige Signal-Wert, den
+	// Go plattformübergreifend garantiert (Linux/macOS/Windows).
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
+	<-sigCh
+
+	log.Println("Beende telegraf...")
+	return app.StopTelegraf()
 }
 
 func main() {
@@ -117,6 +169,15 @@ func main() {
 			"Log-Fenster der GUI, die immer vollständig angezeigt wird.\n"+
 			"Default: info.",
 	)
+	startHeadless := flag.Bool(
+		"start-headless",
+		false,
+		"Liest die Konfiguration genau wie beim normalen Start (--config\n"+
+			"bzw. ~/.brautomat-telegraf-gui/config.json) und startet telegraf\n"+
+			"sofort damit, OHNE die GUI anzuzeigen. Läuft im Vordergrund, bis\n"+
+			"das Programm mit Ctrl+C beendet wird - telegraf wird dabei sauber\n"+
+			"gestoppt. Nützlich z.B. für den Betrieb ohne Desktop-Umgebung.",
+	)
 	flag.Parse()
 
 	// flag.Parse() meldet nur ungültige *Flags* selbstständig (siehe
@@ -142,6 +203,14 @@ func main() {
 			log.Fatalf("Export der Templates fehlgeschlagen: %v", err)
 		}
 		fmt.Printf("Templates exportiert nach %s\n", *exportTemplatesDir)
+		os.Exit(0)
+	}
+
+	if *startHeadless {
+		app := NewApp(*templatesDir, *configPath)
+		if err := runHeadless(app); err != nil {
+			log.Fatalf("Headless-Start fehlgeschlagen: %v", err)
+		}
 		os.Exit(0)
 	}
 

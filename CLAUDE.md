@@ -19,8 +19,8 @@ mitgelieferten `telegraf`-Binary in `bin/`.
 ## Architektur (wichtig für Änderungen)
 
 ```
-main.go                    Flag-Parsing (--templates-dir, --config, --export-templates, --log-level), printUsage() als flag.Usage (deckt --help/-h UND ungültige Flags/Argumente ab), embed der frontend/-Assets, wails.Run()
-app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseExportTemplatesDir, ExportTemplates, ChooseSaveLogPath, SaveLog
+main.go                    Flag-Parsing (--templates-dir, --config, --export-templates, --log-level, --start-headless), printUsage() als flag.Usage (deckt --help/-h UND ungültige Flags/Argumente ab), runHeadless() für --start-headless, embed der frontend/-Assets, wails.Run()
+app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseExportTemplatesDir, ExportTemplates, ChooseSaveLogPath, SaveLog. Intern (nicht gebunden): startTelegrafCore(), initRuntimeState() - ctx-frei, auch vom Headless-Modus genutzt (siehe main.go)
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
   templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
@@ -41,11 +41,26 @@ tools/
 
 **Datenfluss beim Klick auf "Start":**
 1. Frontend sammelt Formularwerte in ein `Config`-Objekt (siehe `collectConfig()` in `main.js`) - inkl. `templatesDir` (leer, wenn "Eigene Templates verwenden" nicht angehakt ist)
-2. `StartTelegraf(cfg)` in `app.go` wird aufgerufen (Wails-Binding)
-3. `config.GetTemplatesFS(cfg.TemplatesDir)` liefert entweder die eingebetteten Templates (leerer String) oder das im Formular angegebene Verzeichnis - das `--templates-dir`-Flag wirkt nur noch als initialer Vorschlagswert (siehe `GetDefaults`), nicht mehr als fixe Vorgabe
+2. `StartTelegraf(cfg)` in `app.go` wird aufgerufen (Wails-Binding) und ruft intern `startTelegrafCore()` auf
+3. `startTelegrafCore()`: `config.GetTemplatesFS(cfg.TemplatesDir)` liefert entweder die eingebetteten Templates (leerer String) oder das im Formular angegebene Verzeichnis - das `--templates-dir`-Flag wirkt nur noch als initialer Vorschlagswert (siehe `GetDefaults`), nicht mehr als fixe Vorgabe
 4. `config.Generate()` rendert `telegraf.conf` + je aktiviertem Ziel eine Datei unter `telegraf.d/`
 5. `process.Runner.Start()` startet die `telegraf`-Binary mit `--config` und `--config-directory`
-6. stdout/stderr werden zeilenweise als `telegraf:log`-Event ans Frontend gestreamt
+6. `StartTelegraf()` übergibt `startTelegrafCore()` dabei Callbacks, die stdout/stderr zeilenweise als `telegraf:log`-Event ans Frontend streamen
+
+**Headless-Modus (`--start-headless`, `runHeadless()` in `main.go`):**
+nutzt dieselbe `App`, aber `wails.Run()` läuft nie - es gibt also nie
+einen echten `a.ctx`. Deshalb:
+- `app.initRuntimeState()` (statt `startup()`) legt `workDir`/`telegrafPath`
+  an, komplett ohne Wails-Bezug
+- `app.startTelegrafCore()` wird direkt mit eigenen Callbacks aufgerufen
+  (stdout/`log` statt `runtime.EventsEmit`), NICHT `StartTelegraf()`
+  selbst, da das `runtime.EventsEmit(a.ctx, ...)` mit nil-Kontext aufrufen
+  würde
+- **Wichtig bei künftigen Änderungen an `StartTelegraf`/`startup`:** jede
+  Logik, die auch im Headless-Modus gebraucht wird, gehört in
+  `startTelegrafCore()`/`initRuntimeState()` (ctx-frei), nicht in
+  `StartTelegraf()`/`startup()` selbst (die dürfen `a.ctx`
+  voraussetzen, da sie nur über Wails aufgerufen werden)
 
 **CLI-Sonderfall `--export-templates <pfad>`:** wird dieses Flag gesetzt,
 exportiert `main.go` vor `wails.Run()` die eingebetteten Templates via
@@ -152,6 +167,13 @@ Brautomat erreichbar zu haben.
   die Frontend-Seite anpassen. Bei weiteren Änderungen an diesem Bereich
   die Sicherheitshinweise in `README.md` beachten (Secret-Store,
   OS-Keychain).
+
+- **Offene Frage (noch nicht entschieden):** Wie sich `--start-headless`
+  verhalten soll, wenn die geladene Konfiguration keine Passwörter enthält
+  (weil "Passwörter speichern" beim letzten Speichern aus war) - aktuell
+  startet telegraf einfach mit leeren Werten, ohne Warnung oder
+  Sonderbehandlung. Vor einer Änderung hier Rücksprache halten, das ist
+  bewusst offengelassen worden.
 
 ## Nicht tun
 

@@ -41,6 +41,42 @@ brautomat-telegraf-gui/
         └── main.go                   # Eigenständiger Mock für /telemetry (Entwicklung ohne echtes Gerät)
 ```
 
+## Headless-Modus (ohne GUI)
+
+```
+./brautomat-telegraf-gui --start-headless
+```
+
+Liest die Konfiguration mit derselben Priorität wie beim normalen
+GUI-Start (`--config` bzw. `~/.brautomat-telegraf-gui/config.json`,
+existiert dort noch keine Datei: `config.Default()`) und startet
+telegraf sofort damit - **ohne** dass ein Fenster erscheint. Die
+Telegraf-Ausgabe landet direkt auf stdout, eigene Statusmeldungen (z.B.
+"telegraf läuft im Headless-Modus...") auf stderr über das normale
+`log`-Paket.
+
+Das Programm läuft im Vordergrund, bis es mit **Ctrl+C** beendet wird;
+dabei wird telegraf sauber gestoppt (Details siehe
+`internal/process/process_unix.go` bzw. `process_windows.go`), bevor
+sich das Programm beendet. Gedacht z.B. für den Betrieb auf einem
+Server/Raspberry Pi ohne Desktop-Umgebung, oder um die aktuell
+gespeicherte Konfiguration ohne GUI-Interaktion zu starten (etwa aus
+einem eigenen Systemd-Unit/Autostart-Skript heraus).
+
+Kombinierbar mit `--config` und `--templates-dir`:
+
+```
+./brautomat-telegraf-gui --start-headless --config /pfad/zu/meiner/config.json
+```
+
+**Zu Passwörtern:** Wurden beim letzten "Speichern" keine Passwörter mit
+gespeichert (Checkbox "Passwörter speichern" war aus, siehe Abschnitt
+"Konfiguration speichern/laden"), enthält die geladene Konfiguration für
+die entsprechenden Ziele leere Passwortfelder - telegraf startet dann
+mit diesen leeren Werten. Ein spezielles Verhalten für diesen Fall (z.B.
+Abbruch mit Fehlermeldung, interaktive Passwortabfrage) ist aktuell noch
+nicht vorgesehen.
+
 ## Mock-Server für die Entwicklung
 
 Unter `tools/mock-server` liegt ein eigenständiger, minimaler Ersatz für

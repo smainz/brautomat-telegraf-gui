@@ -34,13 +34,10 @@ func NewApp(templatesDir, configPath string) *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	workDir, err := os.MkdirTemp("", "brautomat-telegraf-*")
-	if err != nil {
-		runtime.LogErrorf(ctx, "Konnte Arbeitsverzeichnis nicht anlegen: %v", err)
+	if err := a.initRuntimeState(); err != nil {
+		runtime.LogErrorf(ctx, "Initialisierung fehlgeschlagen: %v", err)
 		return
 	}
-	a.workDir = workDir
-	a.telegrafPath = findTelegrafBinary()
 
 	runtime.LogInfof(ctx, "Arbeitsverzeichnis: %s", a.workDir)
 	runtime.LogInfof(ctx, "telegraf-Binary: %s", a.telegrafPath)
@@ -50,6 +47,21 @@ func (a *App) startup(ctx context.Context) {
 	if resolvedConfigPath, err := a.resolveConfigPath(""); err == nil {
 		runtime.LogInfof(ctx, "Konfigurationsdatei: %s", resolvedConfigPath)
 	}
+}
+
+// initRuntimeState legt das temporäre Arbeitsverzeichnis an und ermittelt
+// den Pfad zur telegraf-Binary. Bewusst getrennt von startup() und ohne
+// jeden Wails-Bezug (kein a.ctx nötig), damit es auch im Headless-Modus
+// (--start-headless, siehe main.go) verwendet werden kann, wo nie
+// wails.Run() bzw. OnStartup läuft.
+func (a *App) initRuntimeState() error {
+	workDir, err := os.MkdirTemp("", "brautomat-telegraf-*")
+	if err != nil {
+		return fmt.Errorf("Arbeitsverzeichnis konnte nicht angelegt werden: %w", err)
+	}
+	a.workDir = workDir
+	a.telegrafPath = findTelegrafBinary()
+	return nil
 }
 
 func (a *App) shutdown(ctx context.Context) {
@@ -224,6 +236,34 @@ func (a *App) SaveLog(content, path string) error {
 // "telegraf:log" an das Frontend gestreamt, Statuswechsel per
 // "telegraf:status" ("running" / "stopped").
 func (a *App) StartTelegraf(cfg TelegrafConfig) error {
+	onLine := func(line string) {
+		runtime.EventsEmit(a.ctx, "telegraf:log", line)
+	}
+	onExit := func(err error) {
+		if err != nil {
+			runtime.EventsEmit(a.ctx, "telegraf:log", "[Prozess beendet mit Fehler] "+err.Error())
+		} else {
+			runtime.EventsEmit(a.ctx, "telegraf:log", "[Prozess beendet]")
+		}
+		runtime.EventsEmit(a.ctx, "telegraf:status", "stopped")
+	}
+
+	if err := a.startTelegrafCore(cfg, onLine, onExit); err != nil {
+		return err
+	}
+
+	runtime.EventsEmit(a.ctx, "telegraf:status", "running")
+	return nil
+}
+
+// startTelegrafCore enthält die eigentliche, GUI-unabhängige Logik zum
+// Rendern der Telegraf-Config und Starten des Prozesses. Sowohl
+// StartTelegraf (GUI, Ausgabe per Wails-Event) als auch der
+// Headless-Modus (--start-headless in main.go, Ausgabe auf der Konsole)
+// rufen diese Methode auf und übergeben dafür jeweils passende
+// onLine/onExit-Callbacks - so bleibt die eigentliche Start-Logik an
+// genau einer Stelle.
+func (a *App) startTelegrafCore(cfg TelegrafConfig, onLine func(string), onExit func(error)) error {
 	if a.runner.IsRunning() {
 		return fmt.Errorf("telegraf läuft bereits")
 	}
@@ -243,24 +283,7 @@ func (a *App) StartTelegraf(cfg TelegrafConfig) error {
 		return fmt.Errorf("Config-Generierung fehlgeschlagen: %w", err)
 	}
 
-	onLine := func(line string) {
-		runtime.EventsEmit(a.ctx, "telegraf:log", line)
-	}
-	onExit := func(err error) {
-		if err != nil {
-			runtime.EventsEmit(a.ctx, "telegraf:log", "[Prozess beendet mit Fehler] "+err.Error())
-		} else {
-			runtime.EventsEmit(a.ctx, "telegraf:log", "[Prozess beendet]")
-		}
-		runtime.EventsEmit(a.ctx, "telegraf:status", "stopped")
-	}
-
-	if err := a.runner.Start(a.telegrafPath, mainConfPath, confDir, onLine, onExit); err != nil {
-		return err
-	}
-
-	runtime.EventsEmit(a.ctx, "telegraf:status", "running")
-	return nil
+	return a.runner.Start(a.telegrafPath, mainConfPath, confDir, onLine, onExit)
 }
 
 // StopTelegraf beendet den laufenden telegraf-Prozess (falls vorhanden).
