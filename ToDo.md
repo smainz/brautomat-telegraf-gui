@@ -2,7 +2,6 @@
 
 - Schreibe einen einfachen Mock-Server, der in der Entwicklung genutzt werden kann,
   um die Daten abzugragen. Timestamp soll sich hochzählen, einige Werte sich verändern. Die genaue Systematik ist dabei irrelevant.
-- Füge einen Knopf zum exportieren der Templates hinzu
 - Ergänze einen Kommando `--start-headless`, dass nach dem Lesen der Konfiguration
   gleich startet, ohne die GUI anzuzeigen. Dabei soll der telegraf Prozess
   in der Konfiguration gestartet werden, die eingelesen wurde. Was passiert, wenn
@@ -22,3 +21,4 @@
 - Füge einen Button ein, mit de man den Inhalt des Ausgabefensters speichern kann
 - Flag für Log-Level hinzufügen, mit dem festgelegt werden kann, welche wails Log-Meldungen
   auf der Konsole ausgegeben werden.
+- Füge einen Knopf zum exportieren der Templates hinzu

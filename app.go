@@ -165,6 +165,24 @@ func (a *App) ChooseOpenConfigPath() (string, error) {
 	})
 }
 
+// ChooseExportTemplatesDir öffnet einen nativen Verzeichnis-Dialog für
+// das Zielverzeichnis des Template-Exports.
+func (a *App) ChooseExportTemplatesDir() (string, error) {
+	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Zielverzeichnis für Template-Export wählen",
+	})
+}
+
+// ExportTemplates exportiert die eingebetteten Standard-Templates
+// unverändert nach destDir - das GUI-Äquivalent zum "--export-templates"
+// CLI-Flag (siehe main.go), nur ohne die GUI dafür zu verlassen. Gedacht
+// als bequemer Ausgangspunkt, um die Templates anschließend anzupassen
+// und über das Textfeld/"Durchsuchen…" im Templates-Panel wieder zu
+// verwenden.
+func (a *App) ExportTemplates(destDir string) error {
+	return config.ExportEmbeddedTemplates(destDir)
+}
+
 // ChooseTemplatesDir öffnet einen nativen Verzeichnis-Dialog, damit der
 // Benutzer den Pfad zu eigenen Templates nicht von Hand eintippen muss.
 // Bricht der Benutzer ab, wird ein leerer String ohne Fehler

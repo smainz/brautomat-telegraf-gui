@@ -12,6 +12,8 @@ import {
   ChooseSaveConfigPath,
   ChooseOpenConfigPath,
   ChooseTemplatesDir,
+  ChooseExportTemplatesDir,
+  ExportTemplates,
   ChooseSaveLogPath,
   SaveLog,
   GetDefaultConfigPath,
@@ -189,6 +191,17 @@ window.addEventListener('DOMContentLoaded', async () => {
       $('templatesDir').value = chosen;
     } catch (err) {
       appendLog('[Fehler bei der Verzeichnisauswahl] ' + err);
+    }
+  });
+
+  $('exportTemplatesBtn').addEventListener('click', async () => {
+    try {
+      const chosen = await ChooseExportTemplatesDir();
+      if (!chosen) return; // Dialog abgebrochen
+      await ExportTemplates(chosen);
+      appendLog('[Templates] exportiert nach ' + chosen);
+    } catch (err) {
+      appendLog('[Fehler beim Exportieren der Templates] ' + err);
     }
   });
 

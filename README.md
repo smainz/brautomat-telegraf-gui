@@ -111,8 +111,10 @@ Fehlt eine Datei, meldet `GetTemplatesFS` beim Start von Telegraf einen
 klaren Fehler statt später beim Rendern kryptisch abzubrechen.
 
 **Eigene Templates als Ausgangspunkt exportieren:** Statt bei Null
-anzufangen, lassen sich die eingebetteten Standard-Templates per
-CLI-Kommando in ein Verzeichnis exportieren. Diese Variante startet
+anzufangen, lassen sich die eingebetteten Standard-Templates exportieren
+- entweder direkt in der GUI über den Button **"Templates
+exportieren…"** im Templates-Panel (öffnet einen nativen
+Verzeichnis-Dialog), oder per CLI-Kommando. Die CLI-Variante startet
 **nicht** die GUI, sondern exportiert nur und beendet sich sofort:
 
 ```
