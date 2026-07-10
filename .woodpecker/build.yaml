@@ -1,0 +1,40 @@
+# Build-Pipeline für Woodpecker CI.
+#
+# Läuft bei jedem Push und prüft, dass sich die App für die zwei
+# Zielplattformen Linux amd und WIndows amd bauen lässt. Ein
+# Cross-Compiling für macOS/darwin ist nicht möglich, deshalb wird das
+# noch nicht umgesetzt, bis wails diese Möglichkeit bietet.
+# 
+# Es wird bewusst KEIN telegraf heruntergeladen und es werden keine
+# Artefakte irgendwohin hochgeladen - reine "baut es noch?"-Prüfung.
+# Für echte, veröffentlichte Binaries inkl. telegraf siehe release.yaml.
+
+when:
+  - event: push
+
+steps:
+  build-linux:
+    image: golang:1.25-bookworm
+    # environment:
+    #   GOOS: linux
+    #   GOARCH: amd64
+    #   CGO_ENABLED: "1"
+    commands:
+      # GTK/WebKitGTK-Entwicklungspakete für den Wails-Linux-Webview-Backend.
+      - apt-get update
+      - apt-get install -y --no-install-recommends libgtk-3-dev libwebkit2gtk-4.0-dev
+      - go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      - go mod tidy
+      - wails build -platform linux/amd64 -clean -o brautomat-telegraf-gui-linux_amd64
+      - wails build -platform windows/amd64 -windowsconsole brautomat-telegraf-gui-windows_amd64.exe
+      # Cross Compiling vor Darwin is not supported in wails v2
+      # - wails build -platform darwin/universal -clean
+      #
+      # Reine Zusatzprüfung: der Mock-Server ist reines Go ohne cgo und
+      # lässt sich daher problemlos von hier aus für alle drei
+      # Zielplattformen cross-kompilieren - kostet fast nichts und
+      # deckt tools/mock-server mit ab.
+      - GOOS=linux   GOARCH=amd64 go build -o /tmp/mock-server-linux   ./tools/mock-server
+      - GOOS=windows GOARCH=amd64 go build -o /tmp/mock-server-win.exe ./tools/mock-server
+      - GOOS=darwin  GOARCH=amd64 go build -o /tmp/mock-server-darwin ./tools/mock-server
+

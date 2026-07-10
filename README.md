@@ -16,6 +16,7 @@ Läuft unter Linux, macOS und Windows.
 - [Nutzung](#nutzung)
 - [Bauen](#bauen)
 - [Entwicklung](#entwicklung)
+- [CI/CD (Woodpecker)](#cicd-woodpecker)
 - [Sicherheitshinweis zu Zugangsdaten](#sicherheitshinweis-zu-zugangsdaten)
 
 ## Funktionsweise
@@ -238,6 +239,9 @@ brautomat-telegraf-gui/
 ├── main.go                          # Einstiegspunkt, Flag-Parsing, embed der Frontend-Assets
 ├── app.go                           # An das Frontend gebundene Methoden (Start/Stop/Speichern/Testen/...)
 ├── wails.json                       # Wails-Projektkonfiguration
+├── .woodpecker/
+│   ├── build.yaml                   # CI: Build-Check für Linux/Windows/macOS bei jedem Push
+│   └── release.yaml                 # CI: Release inkl. telegraf-Bundle bei Tag-Push, Upload nach Forgejo
 ├── internal/
 │   ├── config/
 │   │   ├── config.go                # Config-Struct (Formularmodell)

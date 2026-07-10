@@ -1,4 +1,5 @@
 build/
+dist/
 frontend/wailsjs/
 bin/telegraf
 bin/telegraf.exe

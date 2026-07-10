@@ -1,10 +1,10 @@
 # ToDo
 
 
-
-
-
-
+- Erzeuge ein build.xml für woodpecker-ci, dass den Code für drei Umgebungen MaxOS, Windows amd64, linux amd64 baut, sobald code gepushed wird. EIn Herunterladen von telegraf ist nnicht nötig.
+- Erzeuge ein release.xml für woodpecker-ci, das eine Release baut und diese auf git.mainz.ws (Forgejo) als Release ablegt. Die Releses sollen für drei Umgebungen MaxOS, Windows amd64, linux amd64  gebaut werden. telegraf soll in die releases als Archiv mit integriert sein. Secrets für forgejo git.mainz.ws stelle ich in Woodpecker zur Verfügung.
+  DAs Bauen der Release wird getriggert durch einen Tag. Der Tag ist die Version der Release.
+  Beim bauen der relase soll die jeweils passende telegraf Version heruntergeladen und mit in das archiv gepackt werden
 
 ## Done
 - `--config` Flag einbauen
@@ -26,3 +26,9 @@
   gleich startet, ohne die GUI anzuzeigen. Dabei soll der telegraf Prozess
   in der Konfiguration gestartet werden, die eingelesen wurde. Was passiert, wenn
   keine Passwörter gespeichert sind, überlege ich mir später.
+  - Stelle die Buttons zum Leeren und Speichern der Ausgabe unter das Textfenster
+- Blende die Engabe für den Template-Pfad sowie den Export-Button für die Templates aus,
+  enn die checkbox "Eigene Temlates verwenden" nicht ausgewählt ist.
+- Füge eine "Testen" Funktion bei Gerät ein. Diese versucht einen Request auf die
+  Telemetrie-Url auszuführen. hat das Erfolg, wird eine positive Bestätigung angegeben.
+  Kommt es zu einem Fehler, wird der Fehlergrund in einem Pop-Up-Fenster angezeigt.  

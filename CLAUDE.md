@@ -37,6 +37,9 @@ frontend/
 bin/                          Hier liegt (nach Download) die telegraf-Binary pro Zielplattform
 tools/
   mock-server/main.go         Eigenständiger /telemetry-Mock für die Entwicklung (reines stdlib, kein Wails-Import)
+.woodpecker/
+  build.yaml                   CI: Push -> Build-Check für linux/amd64, windows/amd64, darwin/amd64 (kein telegraf, kein Upload)
+  release.yaml                 CI: Tag-Push -> Build + telegraf-Download + Bundle + Upload als Forgejo-Release (git.mainz.ws)
 ```
 
 **Datenfluss beim Klick auf "Start":**
@@ -185,6 +188,20 @@ Brautomat erreichbar zu haben.
   startet telegraf einfach mit leeren Werten, ohne Warnung oder
   Sonderbehandlung. Vor einer Änderung hier Rücksprache halten, das ist
   bewusst offengelassen worden.
+
+- **CI-Pipelines** (`.woodpecker/build.yaml`, `.woodpecker/release.yaml`):
+  Woodpecker-YAML, kein XML. Beide Dateien enthalten je drei
+  `---`-getrennte Workflows (linux/amd64, windows/amd64, darwin/amd64),
+  gesteuert über das `platform`-Feld, da Wails GUI-Builds sich nicht
+  zuverlässig von Linux aus für Windows/macOS cross-kompilieren lassen -
+  Windows/macOS brauchen echte, registrierte Agenten mit Local-Backend.
+  `release.yaml` lädt telegraf direkt von `dl.influxdata.com` (Version
+  über `TELEGRAF_VERSION` je Workflow, aktuell hart hinterlegt - bei
+  Bedarf zentral pflegen statt an drei Stellen einzeln vergessen) und
+  lädt Assets über `woodpeckerci/plugin-release` auf `git.mainz.ws`
+  hoch; der benötigte Forgejo-Token wird als Woodpecker-Secret
+  `forgejo_token` erwartet (Name bei Bedarf in allen drei
+  `publish-*`-Schritten konsistent anpassen).
 
 ## Nicht tun
 
