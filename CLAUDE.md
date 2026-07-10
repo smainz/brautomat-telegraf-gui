@@ -24,8 +24,9 @@ app.go                      An das Frontend gebundene API: StartTelegraf, StopTe
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
   templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
-  templates/*.tmpl           Die 6 eingebetteten Standard-Templates (text/template-Syntax)
-  generator.go               Rendert Templates -> telegraf.conf + telegraf.d/outputs-*.conf
+  templates/*.tmpl           Die 7 eingebetteten Standard-Templates (text/template-Syntax)
+  generator.go               Rendert Templates -> telegraf.conf + telegraf.d/outputs-*.conf + processors-rename.conf (immer, zielunabhängig)
+  csv_header.go              csvColumns (MUSS mit outputs-csv.conf.tmpl synchron sein) + EnsureCSVHeader()
   persistence.go             DefaultConfigPath() (~/.brautomat-telegraf-gui/config.json) + Save()/Load() als JSON; Save() entfernt Passwörter/Token, wenn cfg.SavePasswords false ist (Default)
 internal/process/
   runner.go                  Plattformneutrale Prozesssteuerung (Start/Stop/Log-Streaming)
@@ -118,6 +119,26 @@ Config-Rendering und alle Ziel-Tabs durchzutesten, ohne einen echten
 Brautomat erreichbar zu haben.
 
 ## Konventionen / worauf beim Ändern zu achten ist
+
+- **Feldnamen-Umbenennung** (`processors-rename.conf.tmpl`): benennt die
+  kurzen Geräte-JSON-Felder (`m`, `mt`, `mp`, `s`, `st`, `sp`, `h`, `ht`,
+  `hp`, `f`, `ft`) global für alle Ziele in sprechende Namen um (z.B.
+  `m` -> `mash_temperature`). Wird in `generator.go` **immer** gerendert,
+  unabhängig davon, welche Ziele aktiviert sind - anders als die
+  `outputs-*.conf.tmpl`-Dateien, die nur bei aktiviertem Ziel entstehen.
+  `t` ist bewusst NICHT Teil dieser Umbenennung, da `json_time_key = "t"`
+  in `telegraf.conf.tmpl` das Feld bereits vorher als Zeitstempel der
+  Metrik konsumiert - es existiert danach kein Feld `t` mehr.
+
+- **CSV-Spaltenreihenfolge/-Header**: `outputs-csv.conf.tmpl` setzt
+  `csv_columns` auf eine feste Liste (statt telegrafs alphabetischer
+  Default-Sortierung) und `csv_header = false`. Die App schreibt den
+  passenden Header stattdessen selbst, einmalig vor jedem Start (siehe
+  `EnsureCSVHeader()` in `csv_header.go`, aufgerufen aus
+  `startTelegrafCore()` in `app.go`, direkt nach `config.Generate()`).
+  **Diese beiden Spaltenlisten müssen manuell synchron gehalten
+  werden** - ändert sich eine, muss die andere entsprechend mitgezogen
+  werden, sonst driften Header und tatsächliche Datenspalten auseinander.
 
 - **Neues CLI-Flag hinzufügen**: reicht i.d.R. eine `flag.String/Bool/...`-
   Definition in `main()` mit gutem, mehrzeiligem Usage-Text (Konvention:

@@ -1,0 +1,45 @@
+# Benennt die kurzen JSON-Feldnamen des Brautomat-Gerätes in sprechende
+# Namen um. Gilt global für alle aktivierten Ziele (CSV, InfluxDB,
+# Postgres, MySQL, MQTT), da processors.* auf jede Metrik angewendet
+# wird, bevor sie an die outputs.* weitergereicht wird.
+#
+# "t" (Device-Zeitstempel) taucht hier bewusst NICHT auf: json_time_key
+# = "t" in telegraf.conf.tmpl verbraucht "t" bereits als Zeitstempel der
+# Metrik selbst - ein eigenständiges Feld "t" gibt es danach nicht mehr,
+# das umbenannt werden könnte. Der Zeitpunkt erscheint stattdessen über
+# das jeweils eigene Zeitkonzept jedes Ziels (z.B. die Spalte
+# "timestamp" bei CSV, siehe csv_columns in outputs-csv.conf.tmpl).
+[[processors.rename]]
+  [[processors.rename.replace]]
+    field = "m"
+    dest = "mash_temperature"
+  [[processors.rename.replace]]
+    field = "mt"
+    dest = "mash_target_temperature"
+  [[processors.rename.replace]]
+    field = "mp"
+    dest = "mash_power_percent"
+  [[processors.rename.replace]]
+    field = "s"
+    dest = "boil_kettle_temperature"
+  [[processors.rename.replace]]
+    field = "st"
+    dest = "boil_kettle_target_temperature"
+  [[processors.rename.replace]]
+    field = "sp"
+    dest = "boil_kettle_power_percent"
+  [[processors.rename.replace]]
+    field = "h"
+    dest = "hlt_temperature"
+  [[processors.rename.replace]]
+    field = "ht"
+    dest = "hlt_target_temperature"
+  [[processors.rename.replace]]
+    field = "hp"
+    dest = "hlt_power_percent"
+  [[processors.rename.replace]]
+    field = "f"
+    dest = "fermenter_temperature"
+  [[processors.rename.replace]]
+    field = "ft"
+    dest = "fermenter_target_temperature"

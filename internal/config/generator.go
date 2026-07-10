@@ -31,6 +31,12 @@ func Generate(tmplFS fs.FS, cfg Config, outDir string) error {
 		return fmt.Errorf("telegraf.conf: %w", err)
 	}
 
+	// Gilt immer, unabhängig davon, welche Ziele aktiviert sind - siehe
+	// processors-rename.conf.tmpl für die Begründung.
+	if err := renderToFile(tmplFS, "processors-rename.conf.tmpl", filepath.Join(confDir, "processors-rename.conf"), cfg); err != nil {
+		return fmt.Errorf("processors-rename.conf: %w", err)
+	}
+
 	targets := []outputTarget{
 		{cfg.CSV.Enabled, "outputs-csv.conf.tmpl", "outputs-csv.conf"},
 		{cfg.InfluxDB.Enabled, "outputs-influxdb.conf.tmpl", "outputs-influxdb.conf"},

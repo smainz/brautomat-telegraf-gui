@@ -22,6 +22,7 @@ var defaultTemplates embed.FS
 // mit einem kryptischen Fehler abbricht.
 var requiredTemplateFiles = []string{
 	"telegraf.conf.tmpl",
+	"processors-rename.conf.tmpl",
 	"outputs-csv.conf.tmpl",
 	"outputs-influxdb.conf.tmpl",
 	"outputs-postgres.conf.tmpl",

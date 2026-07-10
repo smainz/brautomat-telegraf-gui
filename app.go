@@ -336,6 +336,14 @@ func (a *App) startTelegrafCore(cfg TelegrafConfig, onLine func(string), onExit 
 		return fmt.Errorf("Config-Generierung fehlgeschlagen: %w", err)
 	}
 
+	// Schreibt die CSV-Kopfzeile einmalig, falls die Zieldatei noch
+	// nicht existiert oder leer ist. Muss vor dem Start von telegraf
+	// passieren, da telegraf selbst (bewusst) keinen Header schreibt -
+	// siehe csv_header = false in outputs-csv.conf.tmpl.
+	if err := config.EnsureCSVHeader(cfg); err != nil {
+		return fmt.Errorf("CSV-Header konnte nicht vorbereitet werden: %w", err)
+	}
+
 	return a.runner.Start(a.telegrafPath, mainConfPath, confDir, onLine, onExit)
 }
 
