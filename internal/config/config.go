@@ -12,6 +12,12 @@ type Config struct {
 	// verwenden (siehe internal/config/templates.go, GetTemplatesFS).
 	TemplatesDir string `json:"templatesDir"`
 
+	// TelegrafPath: Pfad zur telegraf-Executable. Leerer String = die
+	// App versucht selbst einen Pfad zu ermitteln (siehe
+	// findTelegrafBinary() in app.go: zuerst bin/ neben der eigenen
+	// Executable, sonst "telegraf" im PATH).
+	TelegrafPath string `json:"telegrafPath"`
+
 	// SavePasswords steuert, ob Save() Passwörter/Token (InfluxDB-Token,
 	// Postgres-/MySQL-Passwort) mit in die Konfigurationsdatei schreibt.
 	// Zero-Value ist false, d.h. Passwörter werden standardmäßig NICHT

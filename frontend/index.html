@@ -50,6 +50,27 @@
   <!-- ============================ Konfiguration ============================ -->
   <div class="top-tab-panel" data-top-tab-panel="config">
 
+    <section class="panel">
+      <h2>Telegraf-Executable</h2>
+      <label>Pfad
+        <span class="path-row">
+          <input id="telegrafPath" type="text" placeholder="z.B. /usr/local/bin/telegraf oder C:\telegraf\telegraf.exe" />
+          <button id="browseTelegrafBtn" type="button">Durchsuchen…</button>
+        </span>
+      </label>
+      <div class="controls">
+        <button id="downloadTelegrafBtn">telegraf herunterladen…</button>
+      </div>
+      <p class="hint">
+        Leer lassen, um automatisch zu suchen (zuerst neben dem Programm
+        selbst im Unterordner <code>bin/</code>, sonst im PATH).
+        "telegraf herunterladen…" lädt die passende Version für dieses
+        Betriebssystem herunter, entpackt sie nach
+        <code>~/.brautomat-telegraf-gui/telegraf/</code> und trägt den
+        gefundenen Pfad hier automatisch ein.
+      </p>
+    </section>
+
     <section class="panel targets">
       <h2>Ziele (wahlweise aktivierbar)</h2>
 

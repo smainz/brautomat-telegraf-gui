@@ -15,6 +15,7 @@ import (
 
 	"brautomat-telegraf-gui/internal/config"
 	"brautomat-telegraf-gui/internal/process"
+	teledownload "brautomat-telegraf-gui/internal/telegraf"
 )
 
 // App ist an das Frontend gebunden (siehe main.go: options.App.Bind).
@@ -87,6 +88,7 @@ type TelegrafConfig = config.Config
 func (a *App) GetDefaults() TelegrafConfig {
 	cfg := config.Default()
 	cfg.TemplatesDir = a.templatesDir
+	cfg.TelegrafPath = a.telegrafPath
 	return cfg
 }
 
@@ -193,6 +195,41 @@ func (a *App) TestDeviceConnection(deviceURL string) error {
 	}
 
 	return nil
+}
+
+// ChooseTelegrafPath öffnet einen nativen Datei-Dialog, damit der
+// Benutzer eine vorhandene telegraf-Executable auswählen kann, statt
+// den Pfad von Hand einzutippen. Bricht der Benutzer ab, wird ein
+// leerer String ohne Fehler zurückgegeben.
+func (a *App) ChooseTelegrafPath() (string, error) {
+	filters := []runtime.FileFilter{
+		{DisplayName: "Alle Dateien", Pattern: "*"},
+	}
+	if isWindows() {
+		filters = []runtime.FileFilter{
+			{DisplayName: "Programme (*.exe)", Pattern: "*.exe"},
+		}
+	}
+	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:   "telegraf-Executable auswählen",
+		Filters: filters,
+	})
+}
+
+// DownloadTelegraf lädt telegraf für die aktuell laufende Plattform
+// herunter, entpackt es nach ~/.brautomat-telegraf-gui/telegraf/ und
+// liefert den Pfad zur Executable zurück. Das Frontend trägt diesen
+// Pfad anschließend selbst in das Formularfeld ein (siehe
+// downloadTelegrafBtn-Handler in main.js) - Linux und Windows legen die
+// Executable an unterschiedlichen Stellen innerhalb ihrer jeweiligen
+// Release-Archive ab, das wird intern per Verzeichnis-Suche behandelt
+// (siehe internal/telegraf.DownloadAndExtract).
+func (a *App) DownloadTelegraf() (string, error) {
+	destDir, err := teledownload.InstallDir()
+	if err != nil {
+		return "", err
+	}
+	return teledownload.DownloadAndExtract(destDir)
 }
 
 // ChooseSaveConfigPath öffnet einen nativen "Speichern unter"-Dialog und
@@ -344,7 +381,15 @@ func (a *App) startTelegrafCore(cfg TelegrafConfig, onLine func(string), onExit 
 		return fmt.Errorf("CSV-Header konnte nicht vorbereitet werden: %w", err)
 	}
 
-	return a.runner.Start(a.telegrafPath, mainConfPath, confDir, onLine, onExit)
+	// cfg.TelegrafPath kommt aus dem Formular und hat damit Vorrang vor
+	// der beim Start automatisch ermittelten a.telegrafPath (siehe
+	// findTelegrafBinary) - leer = automatische Erkennung verwenden.
+	telegrafPath := cfg.TelegrafPath
+	if telegrafPath == "" {
+		telegrafPath = a.telegrafPath
+	}
+
+	return a.runner.Start(telegrafPath, mainConfPath, confDir, onLine, onExit)
 }
 
 // StopTelegraf beendet den laufenden telegraf-Prozess (falls vorhanden).

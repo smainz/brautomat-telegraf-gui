@@ -17,6 +17,8 @@ import {
   ChooseSaveLogPath,
   SaveLog,
   TestDeviceConnection,
+  ChooseTelegrafPath,
+  DownloadTelegraf,
   GetDefaultConfigPath,
 } from '../wailsjs/go/main/App.js';
 import { EventsOn } from '../wailsjs/runtime/runtime.js';
@@ -37,6 +39,7 @@ function collectConfig() {
     // (eingebettete) Templates verwenden", unabhängig vom zuletzt
     // eingegebenen Pfad im (dann deaktivierten) Textfeld.
     templatesDir: $('customTemplatesEnabled').checked ? $('templatesDir').value : '',
+    telegrafPath: $('telegrafPath').value,
     savePasswords: $('savePasswordsEnabled').checked,
     csv: {
       enabled: $('csvEnabled').checked,
@@ -89,6 +92,8 @@ function applyConfig(cfg) {
   $('customTemplatesEnabled').checked = templatesDir !== '';
   $('templatesDir').value = templatesDir;
   syncTemplatesDirState();
+
+  $('telegrafPath').value = cfg.telegrafPath ?? '';
 
   // Default unchecked, falls nicht in cfg vorhanden (z.B. sehr alte,
   // vor dieser Funktion gespeicherte config.json).
@@ -222,6 +227,31 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   $('customTemplatesEnabled').addEventListener('change', syncTemplatesDirState);
+
+  $('browseTelegrafBtn').addEventListener('click', async () => {
+    try {
+      const chosen = await ChooseTelegrafPath();
+      if (!chosen) return; // Dialog abgebrochen
+      $('telegrafPath').value = chosen;
+    } catch (err) {
+      appendLog('[Fehler bei der Dateiauswahl] ' + err);
+    }
+  });
+
+  $('downloadTelegrafBtn').addEventListener('click', async () => {
+    const btn = $('downloadTelegrafBtn');
+    btn.disabled = true;
+    appendLog('[telegraf] Download läuft…');
+    try {
+      const path = await DownloadTelegraf();
+      $('telegrafPath').value = path;
+      appendLog('[telegraf] heruntergeladen und entpackt: ' + path);
+    } catch (err) {
+      appendLog('[Fehler beim Herunterladen von telegraf] ' + err);
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   $('browseTemplatesBtn').addEventListener('click', async () => {
     try {

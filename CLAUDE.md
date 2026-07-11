@@ -20,7 +20,7 @@ mitgelieferten `telegraf`-Binary in `bin/`.
 
 ```
 main.go                    Flag-Parsing (--templates-dir, --config, --export-templates, --log-level, --start-headless), printUsage() als flag.Usage (deckt --help/-h UND ungültige Flags/Argumente ab), runHeadless() für --start-headless, embed der frontend/-Assets, wails.Run()
-app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseExportTemplatesDir, ExportTemplates, ChooseSaveLogPath, SaveLog, TestDeviceConnection. Intern (nicht gebunden): startTelegrafCore(), initRuntimeState() - ctx-frei, auch vom Headless-Modus genutzt (siehe main.go)
+app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseExportTemplatesDir, ExportTemplates, ChooseSaveLogPath, SaveLog, TestDeviceConnection, ChooseTelegrafPath, DownloadTelegraf. Intern (nicht gebunden): startTelegrafCore(), initRuntimeState() - ctx-frei, auch vom Headless-Modus genutzt (siehe main.go)
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
   templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
@@ -32,6 +32,8 @@ internal/process/
   runner.go                  Plattformneutrale Prozesssteuerung (Start/Stop/Log-Streaming)
   process_unix.go             Prozessgruppen + SIGTERM/SIGKILL (build tag: !windows)
   process_windows.go          cmd.Process.Kill() (build tag: windows)
+internal/telegraf/
+  telegraf.go                 Download/Entpacken (zip/tar.gz, stdlib-only) + Suche der telegraf-Executable im Archiv, genutzt von App.DownloadTelegraf()
 frontend/
   index.html + src/main.js    Formular in zwei Top-Level-Tabs ("Main": Gerät/Start-Stop/Ausgabe; "Konfiguration": Ziele/Templates/Speichern), ruft generierte wailsjs-Bindings auf
   src/tabs.js                 Reine UI-Logik: zwei unabhängige Tab-Ebenen (Top-Level .top-tab-btn/.top-tab-panel + Ziele-Unter-Tabs .tab-btn/.tab-panel), unabhängig von main.js
@@ -192,6 +194,15 @@ Brautomat erreichbar zu haben.
   die Frontend-Seite anpassen. Bei weiteren Änderungen an diesem Bereich
   die Sicherheitshinweise in `README.md` beachten (Secret-Store,
   OS-Keychain).
+
+- **Telegraf-Pfad** (`cfg.TelegrafPath`): hat in `startTelegrafCore()`
+  Vorrang vor der beim Start automatisch ermittelten `a.telegrafPath`
+  (`findTelegrafBinary()`). Leerer String im Formular = automatische
+  Erkennung verwenden. `App.DownloadTelegraf()` nutzt
+  `internal/telegraf` zum Herunterladen/Entpacken nach
+  `~/.brautomat-telegraf-gui/telegraf/` und liefert den gefundenen
+  Executable-Pfad zurück, den `main.js` dann selbst ins Formularfeld
+  einträgt - das Backend setzt `cfg.TelegrafPath` nicht selbst.
 
 - **"Testen"-Button/Verbindungstest** (`TestDeviceConnection` in `app.go`):
   führt einen echten HTTP-GET gegen `<deviceUrl>/telemetry` aus (Timeout

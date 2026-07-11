@@ -178,6 +178,26 @@ Spaltenliste für den vorab geschriebenen Header ist in
 eigenen `outputs-csv.conf.tmpl` synchron gehalten werden, falls dort
 eine andere Spaltenreihenfolge definiert wird.
 
+### Telegraf-Executable
+
+Im Panel "Telegraf-Executable" (oberster Bereich im Tab "Konfiguration")
+lässt sich festlegen, welche telegraf-Binary verwendet wird:
+
+- **Leer:** automatische Erkennung - zuerst `bin/` neben der eigenen
+  Programm-Datei, sonst `telegraf`/`telegraf.exe` im PATH.
+- **Pfad eingetragen** (per Hand oder über **"Durchsuchen…"**, einen
+  nativen Datei-Dialog): wird direkt verwendet.
+- **"telegraf herunterladen…"**: lädt die passende telegraf-Version für
+  das aktuell laufende Betriebssystem von `dl.influxdata.com` herunter,
+  entpackt sie nach `~/.brautomat-telegraf-gui/telegraf/` und trägt den
+  gefundenen Pfad zur Executable automatisch in das Feld ein. Das Layout
+  der offiziellen Release-Archive unterscheidet sich zwischen Windows
+  und Linux/macOS - das übernimmt die App automatisch per
+  Verzeichnis-Suche.
+
+Der Pfad ist Teil der Konfiguration (`telegrafPath`-Feld) und wird beim
+Speichern/Laden mit berücksichtigt.
+
 ### Templates: eingebettet vs. benutzerdefiniert
 
 Die Telegraf-Konfiguration wird aus Textvorlagen gerendert, die
@@ -312,6 +332,8 @@ brautomat-telegraf-gui/
 │       ├── runner.go                # Start/Stop/Log-Streaming (plattformneutraler Teil)
 │       ├── process_unix.go          # SIGTERM/SIGKILL, Prozessgruppen (Linux/macOS)
 │       └── process_windows.go       # Kill() (Windows)
+├── internal/telegraf/
+│   └── telegraf.go                  # Download/Entpacken (zip/tar.gz) + Suche der telegraf-Executable
 ├── frontend/
 │   ├── index.html                   # Formular in zwei Top-Level-Tabs ("Main"/"Konfiguration") + Log-Fenster
 │   └── src/
