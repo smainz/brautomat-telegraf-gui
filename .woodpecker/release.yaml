@@ -2,14 +2,13 @@
 #
 # Läuft nur bei Tags (event: tag) auf dem Branch `main`. Der Tag-Name ist
 # die Versionsnummer # der Release (${CI_COMMIT_TAG}).
-# Baut die App für Linux amd64 und Windows amd64. Lädt jeweils die passende
-# telegraf-Binary herunter, bündelt beides zu einem Archiv und lädt dieses
+# Baut die App für Linux amd64 und Windows amd64. Baut ein Archiv und lädt dieses
 # als Release- Asset auf git.mainz.ws (Forgejo) hoch - über den offiziellen
 # woodpeckerci/plugin-release (unterstützt Gitea/Forgejo/GitHub).
 #
-# Ein Cross-Compiling auf Darvon wird von wails v2 nicht unterstützt, deshalb
+# Ein Cross-Compiling für Darwin wird von wails v2 nicht unterstützt, deshalb
 # wird hier exlizit darauf verzichtet, bis diese Möglichkeit besteht. Es steht
-# außer dem Linux Docker Agent keine Build-Umgebung für woodpecker. Die wird 
+# außer dem Linux Docker Agent keine Build-Umgebung für woodpecker. Die wird
 # für alle Zielumgebungen verwendet.
 #
 # Voraussetzungen:
@@ -25,10 +24,6 @@
 #     nicht zutrifft, könnt ihr `base-url: https://git.mainz.ws` in den
 #     jeweiligen publish-Schritten ergänzen.
 #
-#
-# TELEGRAF_VERSION unten bei Bedarf auf eine neuere Telegraf-Version
-# anheben (Downloads: https://www.influxdata.com/downloads/).
-
 
 when:
   - event: tag
@@ -36,62 +31,33 @@ when:
 
 steps:
 
-# Linux amd64
-
-  build-linux:
+  build:
     image: golang:1.25-bookworm
-    environment:
-      TELEGRAF_VERSION: "1.39.1"
     commands:
       - apt-get update
       - apt-get install -y --no-install-recommends libgtk-3-dev libwebkit2gtk-4.0-dev curl zip unzip
       - go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
       - go mod tidy
+
+      ##############
+      # Linux/amd64
       - wails build -platform linux/amd64 -clean
 
-      # telegraf für Linux amd64 herunterladen und nur die Binary
-      # herausziehen (Layout innerhalb des Archivs kann sich zwischen
-      # Versionen leicht unterscheiden, daher robust per "find" statt
-      # eines fest angenommenen Pfads).
-      - mkdir -p /tmp/telegraf-extract
-      - curl -fsSL -o /tmp/telegraf.tar.gz "https://dl.influxdata.com/telegraf/releases/telegraf-$${TELEGRAF_VERSION}_linux_amd64.tar.gz"
-      - tar -xzf /tmp/telegraf.tar.gz -C /tmp/telegraf-extract
-      - find /tmp/telegraf-extract -executable -type f -name telegraf -exec cp {} /tmp/telegraf \;
-      - chmod +x /tmp/telegraf
-
-      # App-Binary + telegraf + bin/README.md in einen Ordner packen und
+      # App-Binary + README.md in einen Ordner packen und
       # als tar.gz archivieren.
-      - mkdir -p                            dist/linux_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}/bin
+      - mkdir -p                            dist/linux_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}
       - cp build/bin/brautomat-telegraf-gui dist/linux_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}/
-      - cp /tmp/telegraf                    dist/linux_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}/bin/telegraf
       - cp README.md                        dist/linux_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}/ || true
       - tar -czf dist/brautomat-telegraf-gui_${CI_COMMIT_TAG}_linux_amd64.tar.gz -C dist/linux_amd64 brautomat-telegraf-gui_${CI_COMMIT_TAG}
 
-
-# Windows amd64
-
-  build-windows:
-    image: golang:1.25-bookworm
-    environment:
-      TELEGRAF_VERSION: "1.39.1"
-    commands:
-      - apt-get update
-      - apt-get install -y --no-install-recommends libgtk-3-dev libwebkit2gtk-4.0-dev curl zip unzip
-      - go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
-      - go mod tidy
+      ##############
+      # Windows/amd64
       - wails build -platform windows/amd64 -clean -windowsconsole
 
-      - mkdir -p /tmp/telegraf-extract
-      - curl -fsSL -o /tmp/telegraf.zip "https://dl.influxdata.com/telegraf/releases/telegraf-$${TELEGRAF_VERSION}_windows_amd64.zip"
-      - unzip /tmp/telegraf.zip -d /tmp/telegraf-extract/
-      - find /tmp/telegraf-extract -type f -name telegraf.exe -exec cp {} /tmp/telegraf.exe \;
-
-      # App-Binary + telegraf.exe in einen Ordner packen und als zip archivieren.
-      - mkdir -p                                dist/windows_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}/bin
+      # App-Binary + README.md in einen Ordner packen und als zip archivieren.
+      - mkdir -p                                dist/windows_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}
       - cp build/bin/brautomat-telegraf-gui.exe dist/windows_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}/
-      - cp /tmp/telegraf.exe                    dist/windows_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}/bin/telegraf.exe
-      - cp README.md                            dist/windows_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}_windows_amd64/ || true
-      # - zip -r dist/brautomat-telegraf-gui_${CI_COMMIT_TAG}_windows_amd64.zip dist/brautomat-telegraf-gui_${CI_COMMIT_TAG}_windows_amd64/
+      - cp README.md                            dist/windows_amd64/brautomat-telegraf-gui_${CI_COMMIT_TAG}/ || true
       - cd                                      dist/windows_amd64
       - zip -r ../../dist/brautomat-telegraf-gui_${CI_COMMIT_TAG}_windows_amd64.zip .
       - cd ../..

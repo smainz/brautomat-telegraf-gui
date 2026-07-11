@@ -471,9 +471,8 @@ Unter `.woodpecker/` liegen zwei Pipelines für [Woodpecker CI](https://woodpeck
   und Windows amd64 als reine "baut es noch?"-Prüfung. Lädt
   kein telegraf herunter und veröffentlicht nichts.
 - **`release.yaml`**: läuft nur bei einem Tag-Push (der Tag-Name ist die
-  Versionsnummer) auf dem Banch `main`, baut für dieselben Plattformen, lädt jeweils die
-  passende telegraf-Binary herunter, bündelt App + telegraf zu einem
-  Archiv pro Plattform und veröffentlicht diese als Release-Assets auf
+  Versionsnummer) auf dem Banch `main`, baut für dieselben Plattformen, packt
+  ein Archiv pro Plattform und veröffentlicht diese als Release-Assets auf
   `git.mainz.ws` (Forgejo).
 
 ## Sicherheitshinweis zu Zugangsdaten

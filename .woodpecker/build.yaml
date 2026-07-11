@@ -5,9 +5,7 @@
 # Cross-Compiling für macOS/darwin ist nicht möglich, deshalb wird das
 # noch nicht umgesetzt, bis wails diese Möglichkeit bietet.
 #
-# Es wird bewusst KEIN telegraf heruntergeladen und es werden keine
-# Artefakte irgendwohin hochgeladen - reine "baut es noch?"-Prüfung.
-# Für echte, veröffentlichte Binaries inkl. telegraf siehe release.yaml.
+# Für echte, veröffentlichte Binaries siehe release.yaml.
 
 when:
   - event: push
