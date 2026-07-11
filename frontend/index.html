@@ -17,8 +17,7 @@
   <div class="top-tab-panel active" data-top-tab-panel="main">
 
     <section class="panel">
-      <h2>Gerät</h2>
-      <label>Geräte-URL
+      <label>Brautomat-URL
         <span class="path-row">
           <input id="deviceUrl" type="text" placeholder="http://brautomat.local" />
           <button id="testDeviceBtn" type="button">Testen</button>
@@ -28,12 +27,14 @@
       <label>Abrufintervall
         <input id="interval" type="text" placeholder="30s" />
       </label>
-    </section>
-
-    <section class="panel controls">
-      <button id="startBtn">Start</button>
-      <button id="stopBtn" disabled>Stop</button>
-      <span id="status">gestoppt</span>
+        <p class="hint">
+        Wie häufig werden die Daten vom Brautomat abgerufen. 30s im Maischemodus und 60–300s im Gärmodus
+        </p>
+      <div class="controls">
+        <button id="startBtn">Start</button>
+        <button id="stopBtn" disabled>Stop</button>
+        <span id="status">gestoppt</span>
+      </div>
     </section>
 
     <section class="panel">
@@ -57,18 +58,17 @@
           <input id="telegrafPath" type="text" placeholder="z.B. /usr/local/bin/telegraf oder C:\telegraf\telegraf.exe" />
           <button id="browseTelegrafBtn" type="button">Durchsuchen…</button>
         </span>
+        <p class="hint">
+        Leer lassen, um automatisch zu suchen (zuerst neben dem Programm
+        selbst im Unterordner <code>bin/</code>, sonst im PATH).
+        </p>
       </label>
       <div class="controls">
         <button id="downloadTelegrafBtn">telegraf herunterladen…</button>
       </div>
       <p class="hint">
-        Leer lassen, um automatisch zu suchen (zuerst neben dem Programm
-        selbst im Unterordner <code>bin/</code>, sonst im PATH).
-        "telegraf herunterladen…" fragt zunächst nach einem
-        Zielverzeichnis (Vorschlag:
-        <code>~/.brautomat-telegraf-gui/telegraf/</code>), lädt dann die
-        passende Version für dieses Betriebssystem herunter und trägt
-        den gefundenen Pfad zur Executable danach automatisch hier ein.
+        "telegraf herunterladen…" lädt  die
+        passende telegraf-Version für dieses Betriebssystem herunter.
       </p>
 
       <label>Log-Level (telegraf-Ausgabe im Ausgabefenster)
@@ -150,6 +150,10 @@
       <label class="enable-toggle">
         <input type="checkbox" id="customTemplatesEnabled" /> Eigene Templates verwenden
       </label>
+      <p class="hint">
+        Deaktiviert: es werden die im Programm eingebetteten Standard-Templates
+        verwendet.
+      </p>
 
       <div id="customTemplatesControls" class="hidden">
         <label>Verzeichnis
@@ -162,11 +166,6 @@
           <button id="exportTemplatesBtn">Templates exportieren…</button>
         </div>
       </div>
-
-      <p class="hint">
-        Deaktiviert: es werden die im Programm eingebetteten Standard-Templates
-        verwendet.
-      </p>
     </section>
 
     <section class="panel">
@@ -185,7 +184,7 @@
         <button id="saveBtn">Konfiguration speichern</button>
         <button id="saveAsBtn">Konfiguration speichern unter…</button>
         <button id="loadBtn">Konfiguration laden…</button>
-        <span id="configPath"></span>
+        <p class="hint">Pfad zur Konfiguration: <span id="configPath"></span>s</p>
       </div>
     </section>
 
