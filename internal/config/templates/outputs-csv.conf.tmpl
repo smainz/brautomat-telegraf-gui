@@ -1,15 +1,28 @@
+# =========================================================================
+# Output-Plugin für CSV-Dateien
+# =========================================================================
+
 [[outputs.file]]
+  # Pfad zur Zieldatei.
   files = ["{{.CSV.Path}}"]
+
+  # Das Zieldatenformat ist CSV.
   data_format = "csv"
   # csv_header bleibt bewusst false: der Header wird stattdessen einmalig
   # von der App selbst geschrieben, bevor telegraf startet (siehe
   # EnsureCSVHeader in internal/config/csv_header.go), da telegraf mit
   # csv_header = true den Header bei jedem Flush erneut einfügen würde.
   csv_header = false
+
+  # Definiert eine feste Spaltenreihenfolge für die CSV-Datei.
   # Feste Spaltenreihenfolge statt telegrafs Default (alphabetisch nach
   # Tags/Feldern) - WICHTIG: muss exakt mit der Spaltenliste in
   # internal/config/csv_header.go übereinstimmen, sonst passt der vorab
   # geschriebene Header nicht mehr zu den tatsächlichen Datenspalten.
+  # 'timestamp' ist der Zeitstempel der Metrik.
+  # 'tag.*' sind die Tags (Metadaten). Das 'host'-Tag fehlt hier, da es
+  # durch 'omit_hostname = true' in telegraf.conf.tmpl deaktiviert wurde.
+  # 'field.*' sind die eigentlichen Messwerte (nach der Umbenennung).
   csv_columns = [
     "timestamp",
     "tag.mode",
@@ -24,5 +37,5 @@
     "field.hlt_target_temperature",
     "field.hlt_power_percent",
     "field.fermenter_temperature",
-    "field.fermenter_target_temperature",
+    "field.fermenter_target_temperature"
   ]

@@ -1,4 +1,34 @@
+# =========================================================================
+# Output-Plugin für MySQL / MariaDB
+# =========================================================================
+
 [[outputs.sql]]
+  # Treiber für die MySQL/MariaDB-Datenbank.
   driver = "mysql"
+
+  # Verbindungszeichenfolge (DSN) für die Datenbank.
   data_source_name = "{{.MySQL.User}}:{{.MySQL.Password}}@tcp({{.MySQL.Host}}:{{.MySQL.Port}})/{{.MySQL.Database}}"
+
+  # SQL-Template zum Erstellen der Tabelle, falls sie nicht existiert.
   table_template = "CREATE TABLE {TABLE}({COLUMNS})"
+
+  # SQL-Statement, um zu prüfen, ob die Tabelle bereits existiert.
+  table_exists_template = "SELECT 1 FROM {TABLE} LIMIT 1"
+
+  # Initiales SQL-Statement, das nach dem Verbindungsaufbau ausgeführt wird.
+  init_sql = "SET sql_mode='ANSI_QUOTES';"
+
+  # Neue Felder werden automatisch als zusätzliche Spalten in der Tabelle
+  # angelegt.
+  table_update_template = "ALTER TABLE {TABLE} ADD COLUMN {COLUMN}"  
+
+  # Konvertierungsregeln, um Telegraf-Datentypen in SQL-Datentypen umzuwandeln.
+  [outputs.sql.convert]
+    integer   = "INT"
+    real      = "DOUBLE"
+    text      = "TEXT"
+    timestamp = "TIMESTAMP"
+    defaultvalue = "TEXT"
+    unsigned  = "UNSIGNED"
+    bool      = "BOOL"
+    conversion_style = "unsigned_suffix"

@@ -1,14 +1,56 @@
+# =========================================================================
+# Globale Agent-Konfiguration und Input-Plugin
+# =========================================================================
+
 [agent]
+  # Definiert das Standardintervall für das Sammeln von Metriken.
   interval = "{{.Interval}}"
   round_interval = true
+
+  # Definiert das Intervall, in dem Metriken an die konfigurierten
+  # Outputs gesendet (geflusht) werden.
   flush_interval = "{{.Interval}}"
 
+  # Verhindert, dass Telegraf automatisch das 'host'-Tag
+  # mit dem Hostnamen des ausführenden Systems zu jeder Metrik hinzufügt.
+  # Dies gilt global für alle Inputs und Outputs.
+  omit_hostname = true
+
+  ## Log auf Debug-Level für detaillierte Fehlersuche.
+  debug = true
+  ## Log nur auf Error-Level (weniger gesprächig).
+  quiet = false
+
+# Definition des Inputs: Liest Daten von einem HTTP-Endpunkt.
 [[inputs.http]]
+  # Die URL des Brautomat-Gerätes, von der die JSON-Daten gelesen werden.
   urls = ["{{.DeviceURL}}/telemetry"]
+
+  # Überschreibt den Standard-Metriknamen ("http").
+  # Alle von diesem Input erzeugten Metriken heißen nun "brautomat".
+  # Die nachfolgenden Output-Plugins (wie SQL) werden diesen Namen
+  # als Standard-Tabellennamen verwenden.
+  name_override = "brautomat_telemetry"
+
+  # Die zu verwendende HTTP-Methode.
   method = "GET"
+
+  # Das Datenformat der Antwort. Telegraf parst die Antwort als JSON.
   data_format = "json"
+
+  # Gibt an, welches Feld im JSON den Zeitstempel der Metrik enthält.
+  # Das Feld "t" wird als Zeitstempel verwendet und danach aus den Feldern entfernt.
   json_time_key = "t"
+
+  # Das Format des Zeitstempels (hier: Unix-Timestamp in Sekunden).
   json_time_format = "unix"
+
+  # Diese JSON-Felder werden als "Tags" (indizierte Metadaten) anstatt
+  # als "Fields" (Messwerte) interpretiert.
   tag_keys = ["mode", "stepName"]
+
+  # Timeout für die HTTP-Anfrage.
   timeout = "5s"
+
+  # Eigens für diesen Input definiertes Sammelintervall.
   interval = "{{.Interval}}"

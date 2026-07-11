@@ -1,4 +1,31 @@
+# =========================================================================
+# Output-Plugin für PostgreSQL
+# =========================================================================
+
 [[outputs.sql]]
+  # Treiber für die PostgreSQL-Datenbank.
   driver = "pgx"
+
+  # Verbindungszeichenfolge (DSN) für die Datenbank.
+  # Die Platzhalter werden durch die tatsächlichen Zugangsdaten ersetzt.
   data_source_name = "postgres://{{.Postgres.User}}:{{.Postgres.Password}}@{{.Postgres.Host}}:{{.Postgres.Port}}/{{.Postgres.Database}}"
+
+  # SQL-Template, das ausgeführt wird, wenn die Tabelle nicht existiert.
+  # {TABLE} und {COLUMNS} werden von Telegraf ersetzt.
   table_template = "CREATE TABLE {TABLE}({COLUMNS})"
+
+  # Neue Felder werden automatisch als zusätzliche Spalten in der Tabelle
+  # angelegt.
+  table_update_template = "ALTER TABLE {TABLE} ADD COLUMN {COLUMN}"
+
+  # Konvertierungsregeln, um Telegraf-Datentypen in SQL-Datentypen umzuwandeln.
+  [outputs.sql.convert]
+    integer   = "INT"
+    real      = "REAL"
+    text      = "TEXT"
+    timestamp = "TIMESTAMP"
+    defaultvalue = "TEXT"
+    unsigned  = "UNSIGNED"
+    bool      = "BOOL"
+    conversion_style = "unsigned_suffix"
+  

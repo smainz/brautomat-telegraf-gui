@@ -1,8 +1,30 @@
+# =========================================================================
+# Output-Plugin für MQTT mit angepasstem JSON-Format via JSONata
+# =========================================================================
+
 [[outputs.mqtt]]
+  # Die Adresse des MQTT-Brokers.
   servers = ["{{.MQTT.Server}}"]
+
+  # Das MQTT-Topic, auf dem die Daten veröffentlicht werden.
   topic = "{{.MQTT.Topic}}"
+
+  # Quality of Service Level für die Nachrichten.
   qos = {{.MQTT.QoS}}
+
+  # Eindeutige ID für den MQTT-Client.
   client_id = "{{.MQTT.ClientID}}"
+
+  # Zugangsdaten für den MQTT-Broker.
   username = "{{.MQTT.Username}}"
   password = "{{.MQTT.Password}}"
+
+  # Wir verwenden wieder das Standard-JSON-Format.
   data_format = "json"
+
+  # Wir wenden eine JSONata-Transformation an, um die Ausgabe anzupassen.
+  # Dies ist die korrekte Methode für deine Telegraf-Version.
+  # Der Ausdruck nimmt die Objekte 'fields' und 'tags' sowie das Feld
+  # 'timestamp' und führt sie zu einem einzigen, flachen JSON-Objekt zusammen.
+  # Das 'name'-Feld wird dabei ignoriert und fällt weg.
+  json_transformation = '$merge([fields, tags, {"timestamp": timestamp}])'
