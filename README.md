@@ -78,16 +78,20 @@ Die GUI ist in zwei Tabs aufgeteilt.
 
 **Konfiguration** - seltener benötigte Einstellungen, in dieser Reihenfolge:
 
-1. **Ziele** - ein Unter-Tab pro Ziel (CSV-Datei, InfluxDB v2,
+1. **Telegraf** - Pfad zu dem telegraf Executable mit der Möglichkeit, die
+   für den Computer passende Version herunterzuladen sowie die Einstellung,
+   wie viel Ausgaben telegraf produzieren soll.
+2. **Ziele** - ein Unter-Tab pro Ziel (CSV-Datei, InfluxDB v2,
    PostgreSQL, MariaDB/MySQL, MQTT), jeweils mit eigener
    "Ziel aktivieren"-Checkbox. Mehrere Ziele können gleichzeitig aktiv
    sein, unabhängig davon, welcher Unter-Tab gerade sichtbar ist.
-2. **Templates-Konfiguration** - dazu mehr im Abschnitt
+3. **Templates-Konfiguration** - dazu mehr im Abschnitt
    [Templates](#templates-eingebettet-vs-benutzerdefiniert).
-3. **Konfiguration speichern** - dazu mehr im Abschnitt
+4. **Konfiguration speichern** - dazu mehr im Abschnitt
    [Konfiguration speichern/laden](#konfiguration-speichernladen).
 
-![alt text](doc/images/config-screen.png)   
+![alt text](doc/images/config-screen-1.png)
+![alt text](doc/images/config-screen-2.png)
 
 ### Konfiguration speichern/laden
 
