@@ -1,0 +1,54 @@
+# Docker Compose für lokale Test-Datenbanken (Postgres + MariaDB).
+#
+# Nur zum manuellen Testen der MQTT und Postgres-/MySQL-Ziele gedacht
+# - keine Produktionskonfiguration.
+#
+# Zugangsdaten sind bewusst simpel und # entsprechen den Vorbelegungen
+# im Formular (Datenbank/Benutzer "brautomat"), damit man in der GUI
+# nur noch das Passwort eintragen muss.
+# Der MQTT-Server erfordert keine Zugangsdaten
+#
+# Start:   docker compose up -d
+# Stop:    docker compose down
+# Stop + Daten löschen: docker compose down --vvolumes
+#
+# Daten liegen in anonymen Volumes (kein Name vergeben) - die bleiben
+# über "docker compose down" hinweg erhalten, werden aber nicht
+# automatisch wiederverwendet, falls die Container neu erstellt werden
+# (z.B. bei "docker compose up --force-recreate"). Für dauerhafte
+# Testdaten stattdessen benannte Volumes verwenden.
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: brautomat
+      POSTGRES_USER: brautomat
+      POSTGRES_PASSWORD: brautomat
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/postgresql/data
+
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: brautomat
+      MARIADB_USER: brautomat
+      MARIADB_PASSWORD: brautomat
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - /var/lib/mysql
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - 1883:1883
+      # - 8883:8883
+      # - 9001:9001
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log

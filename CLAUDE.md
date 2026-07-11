@@ -38,6 +38,7 @@ frontend/
 bin/                          Hier liegt (nach Download) die telegraf-Binary pro Zielplattform
 tools/
   mock-server/main.go         Eigenständiger /telemetry-Mock für die Entwicklung (reines stdlib, kein Wails-Import)
+docker-compose.yml             Lokale MQTT/Postgres/MariaDB-Testinstanzen (Datenbank/User "brautomat", MQTT_Server erfordert keine User/Passwort, anonyme Volumes)
 .woodpecker/
   build.yaml                   CI: Push -> Build-Check für linux/amd64, windows/amd64, darwin/amd64 (kein telegraf, kein Upload)
   release.yaml                 CI: Tag-Push -> Build + telegraf-Download + Bundle + Upload als Forgejo-Release (git.mainz.ws)

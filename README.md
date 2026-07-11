@@ -319,6 +319,7 @@ brautomat-telegraf-gui/
 │       ├── tabs.js                  # Reine UI-Logik: Top-Level-Tabs + Ziele-Unter-Tabs
 │       └── style.css
 ├── bin/                              # Hier die telegraf-Binary pro Zielplattform ablegen
+├── docker-compose.yml                # Lokale MQTT/Postgres/MariaDB-Testinstanzen (siehe Entwicklung)
 └── tools/
     └── mock-server/
         └── main.go                   # Eigenständiger Mock für /telemetry (Entwicklung ohne echtes Gerät)
@@ -378,6 +379,30 @@ eine andere Spaltenreihenfolge definiert wird.
 
 ```
 wails dev
+```
+
+### Test-Datenbanken / MQTT-Server (Postgres/MariaDB/Mosqitto)
+
+`docker-compose.yml` im Projekt-Root startet lokale Postgres- und
+MariaDB-Instanzen sowie einen MQTT-Server zum Testen der entsprechenden
+Ziele, mit auf den Hostrechner exponierten Standardports (5432 und 3306
+bzw. 1883 für den MQTT-Server) und Daten in anonymen Volumes:
+
+```
+docker compose up -d
+```
+
+Datenbank und Benutzer heißen jeweils `brautomat` (Passwort `brautomat`)
+
+- das entspricht den Vorbelegungen im PostgreSQL-/MySQL-Tab der GUI, es
+muss dort also nur noch das Passwort (`brautomat`) eingetragen werden.
+
+- Der MQTT-Server erfordert keine Authentifizierung. Benutzer und Paswort 
+  leer lassen
+
+```
+docker compose down             # Container stoppen, Daten bleiben erhalten
+docker compose down --volumes   # Container stoppen und Daten löschen
 ```
 
 ### Mock-Server für die Entwicklung
