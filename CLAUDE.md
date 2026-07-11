@@ -212,6 +212,15 @@ Brautomat erreichbar zu haben.
   `ProgressFunc`-Callbacks entgegen, die in `app.go` auf
   `runtime.EventsEmit` gemappt werden.
 
+- **TelegrafLogLevel** (`cfg.TelegrafLogLevel`, Werte `"quiet"`/`"info"`/
+  `"debug"`, Default `"info"`): steuert telegrafs eigene
+  Log-Ausführlichkeit im `[agent]`-Block, gemappt auf `debug`/`quiet` in
+  `telegraf.conf.tmpl` (telegraf hat kein einzelnes "Level"-Feld). NICHT
+  verwechseln mit `--log-level` in `main.go`, das ausschließlich Wails'
+  eigene Konsolenausgabe betrifft (`options.App.LogLevel`) - beide
+  Settings sind unabhängig voneinander und beeinflussen unterschiedliche
+  Ausgaben.
+
 - **"Testen"-Button/Verbindungstest** (`TestDeviceConnection` in `app.go`):
   führt einen echten HTTP-GET gegen `<deviceUrl>/telemetry` aus (Timeout
   `deviceTestTimeout`, aktuell 5s) und liefert bei Erfolg `nil`, sonst

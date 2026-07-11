@@ -206,6 +206,15 @@ lässt sich festlegen, welche telegraf-Binary verwendet wird:
 Der Pfad ist Teil der Konfiguration (`telegrafPath`-Feld) und wird beim
 Speichern/Laden mit berücksichtigt.
 
+**Log-Level von telegraf:** Im selben Panel legt ein Dropdown fest, wie
+ausführlich telegraf selbst ins Ausgabefenster schreibt - "Quiet" (nur
+Fehler), "Normal" (Standard) oder "Debug" (ausführlich, hilfreich zur
+Fehlersuche). telegraf kennt dafür kein einzelnes "Level"-Feld, sondern
+die beiden `[agent]`-Einstellungen `debug`/`quiet`, auf die
+`telegraf.conf.tmpl` die Auswahl abbildet. Nicht zu verwechseln mit dem
+`--log-level`-CLI-Flag dieser App (siehe unten) - das betrifft nur Wails'
+eigene Konsolenausgabe, nicht telegraf.
+
 ### Templates: eingebettet vs. benutzerdefiniert
 
 Die Telegraf-Konfiguration wird aus Textvorlagen gerendert, die

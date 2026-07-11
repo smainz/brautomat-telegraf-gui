@@ -51,8 +51,8 @@
   <div class="top-tab-panel" data-top-tab-panel="config">
 
     <section class="panel">
-      <h2>Telegraf-Executable</h2>
-      <label>Pfad
+      <h2>Telegraf</h2>
+      <label>Pfad zur Executable
         <span class="path-row">
           <input id="telegrafPath" type="text" placeholder="z.B. /usr/local/bin/telegraf oder C:\telegraf\telegraf.exe" />
           <button id="browseTelegrafBtn" type="button">Durchsuchen…</button>
@@ -69,6 +69,20 @@
         <code>~/.brautomat-telegraf-gui/telegraf/</code>), lädt dann die
         passende Version für dieses Betriebssystem herunter und trägt
         den gefundenen Pfad zur Executable danach automatisch hier ein.
+      </p>
+
+      <label>Log-Level (telegraf-Ausgabe im Ausgabefenster)
+        <select id="telegrafLogLevel">
+          <option value="quiet">Quiet - nur Fehler</option>
+          <option value="info">Normal (Standard)</option>
+          <option value="debug">Debug - ausführlich</option>
+        </select>
+      </label>
+      <p class="hint">
+        Betrifft nur, wie ausführlich telegraf selbst ins Ausgabefenster
+        schreibt - nicht die Menge der übertragenen Messdaten. "Debug"
+        ist hilfreich zur Fehlersuche, erzeugt aber deutlich mehr
+        Ausgabe.
       </p>
     </section>
 

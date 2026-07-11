@@ -18,6 +18,14 @@ type Config struct {
 	// Executable, sonst "telegraf" im PATH).
 	TelegrafPath string `json:"telegrafPath"`
 
+	// TelegrafLogLevel steuert die Log-Ausführlichkeit von telegraf
+	// selbst (nicht zu verwechseln mit dem --log-level CLI-Flag dieser
+	// App, das nur Wails' eigene Konsolenausgabe betrifft). telegraf
+	// kennt kein einzelnes "Level"-Feld, sondern die beiden
+	// [agent]-Einstellungen debug/quiet - siehe telegraf.conf.tmpl für
+	// das Mapping. Gültige Werte: "quiet", "info" (Default), "debug".
+	TelegrafLogLevel string `json:"telegrafLogLevel"`
+
 	// SavePasswords steuert, ob Save() Passwörter/Token (InfluxDB-Token,
 	// Postgres-/MySQL-Passwort) mit in die Konfigurationsdatei schreibt.
 	// Zero-Value ist false, d.h. Passwörter werden standardmäßig NICHT
@@ -74,8 +82,9 @@ type MQTTTarget struct {
 // initialen Formularzustand im Frontend.
 func Default() Config {
 	return Config{
-		DeviceURL: "http://brautomat.local",
-		Interval:  "30s",
+		DeviceURL:        "http://brautomat.local",
+		Interval:         "30s",
+		TelegrafLogLevel: "info",
 		CSV: CSVTarget{
 			Enabled: true,
 			Path:    "brautomat.csv",

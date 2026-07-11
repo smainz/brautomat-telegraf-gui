@@ -41,6 +41,7 @@ function collectConfig() {
     // eingegebenen Pfad im (dann deaktivierten) Textfeld.
     templatesDir: $('customTemplatesEnabled').checked ? $('templatesDir').value : '',
     telegrafPath: $('telegrafPath').value,
+    telegrafLogLevel: $('telegrafLogLevel').value,
     savePasswords: $('savePasswordsEnabled').checked,
     csv: {
       enabled: $('csvEnabled').checked,
@@ -95,6 +96,9 @@ function applyConfig(cfg) {
   syncTemplatesDirState();
 
   $('telegrafPath').value = cfg.telegrafPath ?? '';
+  // Fallback 'info', falls aus einer älteren config.json ohne dieses
+  // Feld geladen wird.
+  $('telegrafLogLevel').value = cfg.telegrafLogLevel || 'info';
 
   // Default unchecked, falls nicht in cfg vorhanden (z.B. sehr alte,
   // vor dieser Funktion gespeicherte config.json).

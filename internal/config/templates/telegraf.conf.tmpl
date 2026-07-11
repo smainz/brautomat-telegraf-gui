@@ -17,9 +17,20 @@
   omit_hostname = true
 
   ## Log auf Debug-Level für detaillierte Fehlersuche.
+  # telegraf kennt kein einzelnes "Log-Level"-Feld, sondern steuert die
+  # Ausführlichkeit über debug/quiet. TelegrafLogLevel aus dem Formular
+  # wird hier auf genau eine der drei sinnvollen Kombinationen gemappt:
+  #   "quiet" -> nur Fehler,  "info" -> Standard,  "debug" -> ausführlich
+  {{- if eq .TelegrafLogLevel "debug"}}
   debug = true
-  ## Log nur auf Error-Level (weniger gesprächig).
   quiet = false
+  {{- else if eq .TelegrafLogLevel "quiet"}}
+  debug = false
+  quiet = true
+  {{- else}}
+  debug = false
+  quiet = false
+  {{- end}}
 
 # Definition des Inputs: Liest Daten von einem HTTP-Endpunkt.
 [[inputs.http]]
