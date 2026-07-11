@@ -81,8 +81,6 @@ func DownloadAndExtract(destDir string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("DestDir: " + destDir)
-
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return "", fmt.Errorf("Verzeichnis %q konnte nicht angelegt werden: %w", destDir, err)
 	}
@@ -91,9 +89,7 @@ func DownloadAndExtract(destDir string) (string, error) {
 	if err := download(url, archivePath); err != nil {
 		return "", err
 	}
-	fmt.Println("url: " + url)
-	fmt.Println("archivePath: " + archivePath)
-	//defer os.Remove(archivePath)
+	defer os.Remove(archivePath)
 
 	if err := extract(archivePath, destDir); err != nil {
 		return "", err
@@ -103,7 +99,6 @@ func DownloadAndExtract(destDir string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("execPath: " + execPath)
 
 	if runtime.GOOS != "windows" {
 		if err := os.Chmod(execPath, 0o755); err != nil {
