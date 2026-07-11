@@ -18,6 +18,7 @@ import {
   SaveLog,
   TestDeviceConnection,
   ChooseTelegrafPath,
+  ChooseTelegrafDownloadDir,
   DownloadTelegraf,
   GetDefaultConfigPath,
 } from '../wailsjs/go/main/App.js';
@@ -167,6 +168,57 @@ function hideErrorModal() {
   $('errorModalOverlay').classList.add('hidden');
 }
 
+// Fortschrittsfenster für "telegraf herunterladen…". Zeigt einen
+// Status-Text (Zwischenzustände wie "Lade herunter…"/"Entpacke…") und
+// einen Fortschrittsbalken - solange die Gesamtgröße unbekannt ist
+// (Server ohne Content-Length, oder während des Entpackens), läuft der
+// Balken unbestimmt ("indeterminate"); sobald Byte-Zahlen vorliegen,
+// zeigt er den tatsächlichen Prozentwert.
+function showDownloadModal() {
+  $('downloadModalStatus').textContent = 'Vorbereiten…';
+  $('downloadModalPercent').textContent = '';
+  $('downloadModalProgressFill').style.width = '';
+  $('downloadModalProgressFill').classList.add('indeterminate');
+  $('downloadModalOverlay').classList.remove('hidden');
+}
+
+function hideDownloadModal() {
+  $('downloadModalOverlay').classList.add('hidden');
+}
+
+function updateDownloadStatus(message) {
+  $('downloadModalStatus').textContent = message;
+}
+
+function updateDownloadProgress({ downloaded, total }) {
+  const fill = $('downloadModalProgressFill');
+  const percentEl = $('downloadModalPercent');
+
+  if (total && total > 0) {
+    fill.classList.remove('indeterminate');
+    const pct = Math.min(100, Math.round((downloaded / total) * 100));
+    fill.style.width = pct + '%';
+    percentEl.textContent = `${formatBytes(downloaded)} / ${formatBytes(total)} (${pct}%)`;
+  } else {
+    // Gesamtgröße unbekannt - nur die bisher heruntergeladene Menge
+    // anzeigen, Balken bleibt unbestimmt.
+    fill.classList.add('indeterminate');
+    percentEl.textContent = formatBytes(downloaded) + ' heruntergeladen';
+  }
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  const units = ['KB', 'MB', 'GB'];
+  let value = bytes;
+  let unitIndex = -1;
+  do {
+    value /= 1024;
+    unitIndex++;
+  } while (value >= 1024 && unitIndex < units.length - 1);
+  return value.toFixed(1) + ' ' + units[unitIndex];
+}
+
 // Blendet den Bereich mit Pfad-Textfeld, "Durchsuchen…" und
 // "Templates exportieren…" komplett aus, solange "Eigene Templates
 // verwenden" nicht angehakt ist - nicht nur deaktiviert, sondern
@@ -206,8 +258,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (event.target === $('errorModalOverlay')) hideErrorModal();
   });
   window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') hideErrorModal();
+    if (event.key === 'Escape') {
+      hideErrorModal();
+      hideDownloadModal();
+    }
   });
+
+  $('downloadModalCloseBtn').addEventListener('click', hideDownloadModal);
+
+  EventsOn('telegraf-download:status', updateDownloadStatus);
+  EventsOn('telegraf-download:progress', updateDownloadProgress);
 
   $('testDeviceBtn').addEventListener('click', async () => {
     const result = $('testDeviceResult');
@@ -239,14 +299,26 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   $('downloadTelegrafBtn').addEventListener('click', async () => {
+    let destDir;
+    try {
+      destDir = await ChooseTelegrafDownloadDir();
+      if (!destDir) return; // Dialog abgebrochen
+    } catch (err) {
+      appendLog('[Fehler bei der Verzeichnisauswahl] ' + err);
+      return;
+    }
+
     const btn = $('downloadTelegrafBtn');
     btn.disabled = true;
-    appendLog('[telegraf] Download läuft…');
+    showDownloadModal();
+    appendLog('[telegraf] Download nach ' + destDir + ' gestartet…');
     try {
-      const path = await DownloadTelegraf();
+      const path = await DownloadTelegraf(destDir);
       $('telegrafPath').value = path;
+      updateDownloadStatus('Fertig: ' + path);
       appendLog('[telegraf] heruntergeladen und entpackt: ' + path);
     } catch (err) {
+      updateDownloadStatus('Fehler: ' + err);
       appendLog('[Fehler beim Herunterladen von telegraf] ' + err);
     } finally {
       btn.disabled = false;

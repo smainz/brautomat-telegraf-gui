@@ -129,6 +129,30 @@ input:disabled, button:disabled { opacity: 0.5; }
   white-space: pre-wrap;
 }
 
+.progress-bar {
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 4px;
+  height: 0.9rem;
+  overflow: hidden;
+  margin: 0.6rem 0;
+}
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #3a7;
+  transition: width 0.2s ease;
+}
+.progress-bar-fill.indeterminate {
+  width: 30%;
+  animation: progress-bar-indeterminate 1.2s ease-in-out infinite;
+}
+@keyframes progress-bar-indeterminate {
+  0%   { margin-left: 0%; }
+  50%  { margin-left: 70%; }
+  100% { margin-left: 0%; }
+}
+
 
 .controls { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-top: 0.6rem; }
 .log-controls { margin-top: 0.6rem; margin-bottom: 0; }

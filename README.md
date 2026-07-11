@@ -187,13 +187,21 @@ lässt sich festlegen, welche telegraf-Binary verwendet wird:
   Programm-Datei, sonst `telegraf`/`telegraf.exe` im PATH.
 - **Pfad eingetragen** (per Hand oder über **"Durchsuchen…"**, einen
   nativen Datei-Dialog): wird direkt verwendet.
-- **"telegraf herunterladen…"**: lädt die passende telegraf-Version für
-  das aktuell laufende Betriebssystem von `dl.influxdata.com` herunter,
-  entpackt sie nach `~/.brautomat-telegraf-gui/telegraf/` und trägt den
+- **"telegraf herunterladen…"**: fragt zunächst per nativem
+  Verzeichnis-Dialog nach einem Zielverzeichnis (Vorschlag:
+  `~/.brautomat-telegraf-gui/telegraf/`, kann aber beliebig geändert
+  werden), lädt danach die passende telegraf-Version für das aktuell
+  laufende Betriebssystem von `dl.influxdata.com` herunter und trägt den
   gefundenen Pfad zur Executable automatisch in das Feld ein. Das Layout
   der offiziellen Release-Archive unterscheidet sich zwischen Windows
   und Linux/macOS - das übernimmt die App automatisch per
   Verzeichnis-Suche.
+
+  Während des Downloads erscheint ein Fortschrittsfenster mit
+  Zwischenzuständen ("Lade herunter…", "Entpacke Archiv…", "Suche
+  telegraf-Executable…") sowie einem Fortschrittsbalken (zeigt
+  Byte-Fortschritt/Prozent, sofern der Server eine Content-Length
+  liefert - sonst läuft der Balken unbestimmt weiter).
 
 Der Pfad ist Teil der Konfiguration (`telegrafPath`-Feld) und wird beim
 Speichern/Laden mit berücksichtigt.

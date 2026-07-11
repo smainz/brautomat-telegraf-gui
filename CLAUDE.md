@@ -198,11 +198,19 @@ Brautomat erreichbar zu haben.
 - **Telegraf-Pfad** (`cfg.TelegrafPath`): hat in `startTelegrafCore()`
   Vorrang vor der beim Start automatisch ermittelten `a.telegrafPath`
   (`findTelegrafBinary()`). Leerer String im Formular = automatische
-  Erkennung verwenden. `App.DownloadTelegraf()` nutzt
-  `internal/telegraf` zum Herunterladen/Entpacken nach
-  `~/.brautomat-telegraf-gui/telegraf/` und liefert den gefundenen
-  Executable-Pfad zurück, den `main.js` dann selbst ins Formularfeld
-  einträgt - das Backend setzt `cfg.TelegrafPath` nicht selbst.
+  Erkennung verwenden. `App.ChooseTelegrafDownloadDir()` fragt per
+  Dialog nach einem Zielverzeichnis (Vorschlag: `teledownload.InstallDir()`
+  = `~/.brautomat-telegraf-gui/telegraf`), `App.DownloadTelegraf(destDir)`
+  nutzt `internal/telegraf` zum Herunterladen/Entpacken dorthin und
+  liefert den gefundenen Executable-Pfad zurück, den `main.js` dann
+  selbst ins Formularfeld einträgt - das Backend setzt `cfg.TelegrafPath`
+  nicht selbst. Zwischenzustände (Download/Entpacken/Suche) und
+  Byte-Fortschritt laufen währenddessen über die Events
+  `telegraf-download:status` / `telegraf-download:progress` (analog zu
+  `telegraf:log`/`telegraf:status` beim Start von telegraf selbst) -
+  `internal/telegraf.DownloadAndExtract()` nimmt dafür `StatusFunc`/
+  `ProgressFunc`-Callbacks entgegen, die in `app.go` auf
+  `runtime.EventsEmit` gemappt werden.
 
 - **"Testen"-Button/Verbindungstest** (`TestDeviceConnection` in `app.go`):
   führt einen echten HTTP-GET gegen `<deviceUrl>/telemetry` aus (Timeout

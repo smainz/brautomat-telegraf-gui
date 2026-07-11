@@ -64,10 +64,11 @@
       <p class="hint">
         Leer lassen, um automatisch zu suchen (zuerst neben dem Programm
         selbst im Unterordner <code>bin/</code>, sonst im PATH).
-        "telegraf herunterladen…" lädt die passende Version für dieses
-        Betriebssystem herunter, entpackt sie nach
-        <code>~/.brautomat-telegraf-gui/telegraf/</code> und trägt den
-        gefundenen Pfad hier automatisch ein.
+        "telegraf herunterladen…" fragt zunächst nach einem
+        Zielverzeichnis (Vorschlag:
+        <code>~/.brautomat-telegraf-gui/telegraf/</code>), lädt dann die
+        passende Version für dieses Betriebssystem herunter und trägt
+        den gefundenen Pfad zur Executable danach automatisch hier ein.
       </p>
     </section>
 
@@ -174,6 +175,20 @@
       </div>
     </section>
 
+  </div>
+
+  <div id="downloadModalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>telegraf wird heruntergeladen</h3>
+      <p id="downloadModalStatus">Vorbereiten…</p>
+      <div class="progress-bar">
+        <div id="downloadModalProgressFill" class="progress-bar-fill indeterminate"></div>
+      </div>
+      <p id="downloadModalPercent" class="hint"></p>
+      <div class="controls">
+        <button id="downloadModalCloseBtn">Schließen</button>
+      </div>
+    </div>
   </div>
 
   <div id="errorModalOverlay" class="modal-overlay hidden">

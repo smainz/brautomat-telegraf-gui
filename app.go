@@ -216,20 +216,54 @@ func (a *App) ChooseTelegrafPath() (string, error) {
 	})
 }
 
-// DownloadTelegraf lädt telegraf für die aktuell laufende Plattform
-// herunter, entpackt es nach ~/.brautomat-telegraf-gui/telegraf/ und
-// liefert den Pfad zur Executable zurück. Das Frontend trägt diesen
-// Pfad anschließend selbst in das Formularfeld ein (siehe
-// downloadTelegrafBtn-Handler in main.js) - Linux und Windows legen die
-// Executable an unterschiedlichen Stellen innerhalb ihrer jeweiligen
-// Release-Archive ab, das wird intern per Verzeichnis-Suche behandelt
-// (siehe internal/telegraf.DownloadAndExtract).
-func (a *App) DownloadTelegraf() (string, error) {
-	destDir, err := teledownload.InstallDir()
+// ChooseTelegrafDownloadDir öffnet einen nativen Verzeichnis-Dialog für
+// das Zielverzeichnis von "telegraf herunterladen…". Als Vorschlag dient
+// der Standard-Installationsort (~/.brautomat-telegraf-gui/telegraf).
+// Bricht der Benutzer ab, wird ein leerer String ohne Fehler
+// zurückgegeben.
+func (a *App) ChooseTelegrafDownloadDir() (string, error) {
+	defaultDir, err := teledownload.InstallDir()
 	if err != nil {
 		return "", err
 	}
-	return teledownload.DownloadAndExtract(destDir)
+	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Zielverzeichnis für telegraf-Download wählen",
+		DefaultDirectory: defaultDir,
+	})
+}
+
+// DownloadTelegraf lädt telegraf für die aktuell laufende Plattform
+// herunter und entpackt es nach destDir. Ist destDir leer, wird der
+// Standardort (~/.brautomat-telegraf-gui/telegraf) verwendet.
+//
+// Da der Rückgabewert (Pfad zur Executable) erst nach vollständigem
+// Abschluss vorliegt, werden Zwischenzustände währenddessen per Event
+// an das Frontend gestreamt - "telegraf-download:status" mit einer
+// Textmeldung ("Lade herunter…", "Entpacke…", ...) und
+// "telegraf-download:progress" mit {downloaded, total} in Bytes
+// (total = 0, falls unbekannt). Das Frontend zeigt beides in einem
+// Fortschrittsfenster an (siehe downloadTelegrafBtn-Handler in
+// main.js).
+func (a *App) DownloadTelegraf(destDir string) (string, error) {
+	if destDir == "" {
+		var err error
+		destDir, err = teledownload.InstallDir()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	onStatus := func(msg string) {
+		runtime.EventsEmit(a.ctx, "telegraf-download:status", msg)
+	}
+	onProgress := func(downloaded, total int64) {
+		runtime.EventsEmit(a.ctx, "telegraf-download:progress", map[string]int64{
+			"downloaded": downloaded,
+			"total":      total,
+		})
+	}
+
+	return teledownload.DownloadAndExtract(destDir, onStatus, onProgress)
 }
 
 // ChooseSaveConfigPath öffnet einen nativen "Speichern unter"-Dialog und

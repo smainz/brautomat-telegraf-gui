@@ -31,10 +31,24 @@ import (
 // auch wenn beide unabhängig voneinander funktionieren.
 const Version = "1.39.1"
 
-// downloadTimeout begrenzt, wie lange der Download maximal dauern darf,
-// damit der Button nicht unbegrenzt hängt, falls dl.influxdata.com nicht
-// erreichbar ist.
-const downloadTimeout = 2 * time.Minute
+// downloadTimeout begrenzt, wie lange der gesamte Download (inkl.
+// Lesen des Response-Bodys) maximal dauern darf, damit der Vorgang
+// nicht unbegrenzt hängt, falls dl.influxdata.com nicht erreichbar
+// ist oder die Verbindung abbricht. Bewusst großzügig bemessen, da
+// die Archive ~100+ MB groß sein können.
+const downloadTimeout = 10 * time.Minute
+
+// StatusFunc empfängt kurze, für Menschen lesbare Meldungen zu den
+// einzelnen Arbeitsschritten (z.B. "Lade herunter…", "Entpacke…"), die
+// z.B. in einem Fortschrittsfenster angezeigt werden können.
+type StatusFunc func(message string)
+
+// ProgressFunc empfängt den Download-Fortschritt in Bytes, nach jedem
+// gelesenen Chunk. total ist 0, falls der Server keine
+// Content-Length-Angabe liefert - der Aufrufer kann dann keinen
+// Prozentwert berechnen und sollte stattdessen z.B. nur die
+// heruntergeladene Menge anzeigen.
+type ProgressFunc func(downloaded, total int64)
 
 // DownloadURL liefert die offizielle telegraf-Download-URL für das
 // aktuell laufende Betriebssystem/Architektur.
@@ -60,7 +74,7 @@ func InstallDir() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Home-Verzeichnis konnte nicht ermittelt werden: %w", err)
 	}
-	return filepath.Join(home, ".brautomat-telegraf-gui", "telegraf"), nil
+	return filepath.Join(home, ".brautomat-telegraf-gui"), nil
 }
 
 // executableName ist der Dateiname der telegraf-Executable auf dem
@@ -74,8 +88,15 @@ func executableName() string {
 
 // DownloadAndExtract lädt telegraf für die aktuelle Plattform herunter,
 // entpackt es nach destDir und liefert den Pfad zur eigentlichen
-// Executable zurück.
-func DownloadAndExtract(destDir string) (string, error) {
+// Executable zurück. onStatus und onProgress dürfen jeweils nil sein.
+func DownloadAndExtract(destDir string, onStatus StatusFunc, onProgress ProgressFunc) (string, error) {
+	if onStatus == nil {
+		onStatus = func(string) {}
+	}
+	if onProgress == nil {
+		onProgress = func(int64, int64) {}
+	}
+
 	url, err := DownloadURL()
 	if err != nil {
 		return "", err
@@ -86,15 +107,18 @@ func DownloadAndExtract(destDir string) (string, error) {
 	}
 
 	archivePath := filepath.Join(os.TempDir(), filepath.Base(url))
-	if err := download(url, archivePath); err != nil {
+	onStatus(fmt.Sprintf("Lade %s herunter…", filepath.Base(url)))
+	if err := download(url, archivePath, onProgress); err != nil {
 		return "", err
 	}
 	defer os.Remove(archivePath)
 
+	onStatus("Entpacke Archiv…")
 	if err := extract(archivePath, destDir); err != nil {
 		return "", err
 	}
 
+	onStatus("Suche telegraf-Executable im entpackten Archiv…")
 	execPath, err := findExecutable(destDir, executableName())
 	if err != nil {
 		return "", err
@@ -106,10 +130,11 @@ func DownloadAndExtract(destDir string) (string, error) {
 		}
 	}
 
+	onStatus("Fertig.")
 	return execPath, nil
 }
 
-func download(url, destPath string) error {
+func download(url, destPath string, onProgress ProgressFunc) error {
 	client := http.Client{Timeout: downloadTimeout}
 	resp, err := client.Get(url)
 	if err != nil {
@@ -127,10 +152,36 @@ func download(url, destPath string) error {
 	}
 	defer f.Close()
 
-	if _, err := io.Copy(f, resp.Body); err != nil {
+	total := resp.ContentLength
+	if total < 0 {
+		total = 0 // unbekannt - Server liefert keine Content-Length
+	}
+
+	reader := &progressReader{r: resp.Body, onProgress: onProgress, total: total}
+	if _, err := io.Copy(f, reader); err != nil {
 		return fmt.Errorf("Download konnte nicht gespeichert werden: %w", err)
 	}
 	return nil
+}
+
+// progressReader umhüllt einen io.Reader und meldet nach jedem Read()
+// den bisher insgesamt gelesenen Byte-Wert an onProgress - so lässt
+// sich der Download-Fortschritt verfolgen, ohne den kompletten Body
+// vorher in den Speicher zu laden.
+type progressReader struct {
+	r          io.Reader
+	onProgress ProgressFunc
+	total      int64
+	read       int64
+}
+
+func (p *progressReader) Read(buf []byte) (int, error) {
+	n, err := p.r.Read(buf)
+	if n > 0 {
+		p.read += int64(n)
+		p.onProgress(p.read, p.total)
+	}
+	return n, err
 }
 
 func extract(archivePath, destDir string) error {
