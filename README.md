@@ -1,10 +1,10 @@
 # Brautomat Telegraf Wrapper
 
-Eine Desktop-Anwendung, die Messwerte von einem Gerät namens **Brautomat**
-abholt und wahlweise an ein oder mehrere Ziele weiterleitet: CSV-Datei,
+Eine Desktop-Anwendung, die Messwerte von einem [**Brautomat**](https://innuendopi.gitbook.io/brautomat32)
+abholt und wahlweise per [telegraf](https://www.influxdata.com/time-series-platform/telegraf/) an ein oder mehrere Ziele weiterleitet: CSV-Datei,
 InfluxDB v2, PostgreSQL, MariaDB/MySQL und/oder MQTT. Gedacht für alle,
 die die Braudaten (Temperaturen, aktueller Modus, aktiver Rastschritt,
-Heizleistung ...) dauerhaft protokollieren und z. B. in Grafana
+Heizleistung ...) dauerhaft protokollieren und z. B. in [Grafana](https://grafana.com)
 visualisieren wollen, ohne selbst eine Telegraf-Konfiguration von Hand
 schreiben zu müssen.
 
