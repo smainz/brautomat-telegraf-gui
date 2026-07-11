@@ -1,34 +1,7 @@
 # ToDo
 
-
-- Erzeuge ein build.xml für woodpecker-ci, dass den Code für drei Umgebungen MaxOS, Windows amd64, linux amd64 baut, sobald code gepushed wird. EIn Herunterladen von telegraf ist nnicht nötig.
-- Erzeuge ein release.xml für woodpecker-ci, das eine Release baut und diese auf git.mainz.ws (Forgejo) als Release ablegt. Die Releses sollen für drei Umgebungen MaxOS, Windows amd64, linux amd64  gebaut werden. telegraf soll in die releases als Archiv mit integriert sein. Secrets für forgejo git.mainz.ws stelle ich in Woodpecker zur Verfügung.
-  DAs Bauen der Release wird getriggert durch einen Tag. Der Tag ist die Version der Release.
-  Beim bauen der relase soll die jeweils passende telegraf Version heruntergeladen und mit in das archiv gepackt werden
-
-## Done
-- `--config` Flag einbauen
-- Die Ziele sollen jeweils in einem eigenen Tab konfiguriert werden können. Die Funktionalität, mehrere Ziele einzuschalten soll beibehalten werden.
-- Ergänze in der Oberfläche eine Konfiguration, um den Pfad zu den externen Templates anzugeben. Beachte, dass es eine möglichkeit geben muss, die interne Konfiguration zu verwenden. Diese Funktion soll auch per cli Kommando mit zusätzlicher Pfadangabe zugänglich sein. Wird dieses cli Komando verwendet, wird nur die templates exportiert und die GUI nicht gestartet.
-- Füge eine Funktion hinzu, die Templates zu exportieren, damit man sie verändern kann.
-- Stelle in der Oberfläche klar, dass Speichern, Speicher unter und Laden sich auf die Konfiguration beziehen.
-- Ergänze eine Checkbox: "Passwörter speichern". Ist diese Checkbox gesetzt, dürfen die Passwörter in config.json gspeichert werden, ist es nicht gesetzt, werden die Passwörter nicht mit gespeichert. Default der Checkbox ist unchecked
-- Füge ein Ziel MQTT hinzu, bei dem die Daten an einen MQTT-Server geschickt werden. Das umfasst: neue Konfigurationseinstellungen, neuens Konfigurations-Tab, neues telegraf Template
-- Füge ein '--help' Flag hizu. Falls ein ungültiges Flag / Kommando in der cli angegeben wird, zeige den Hilfetext ebenfalls. Der Hilfetext oll nicht nur die Flags / cli Kommandos erklären, sondern auch kurz die Verwendung des Programms.
-- Füge einen Button ein, mit dem man den Inhalt des Ausgabefensters löschen kann
-- Füge einen Button ein, mit de man den Inhalt des Ausgabefensters speichern kann
-- Flag für Log-Level hinzufügen, mit dem festgelegt werden kann, welche wails Log-Meldungen
-  auf der Konsole ausgegeben werden.
-- Füge einen Knopf zum exportieren der Templates hinzu
-- Schreibe einen einfachen Mock-Server, der in der Entwicklung genutzt werden kann,
-  um die Daten abzugragen. Timestamp soll sich hochzählen, einige Werte sich verändern. Die genaue Systematik ist dabei irrelevant.
-- Ergänze einen Kommando `--start-headless`, dass nach dem Lesen der Konfiguration
-  gleich startet, ohne die GUI anzuzeigen. Dabei soll der telegraf Prozess
-  in der Konfiguration gestartet werden, die eingelesen wurde. Was passiert, wenn
-  keine Passwörter gespeichert sind, überlege ich mir später.
-  - Stelle die Buttons zum Leeren und Speichern der Ausgabe unter das Textfenster
-- Blende die Engabe für den Template-Pfad sowie den Export-Button für die Templates aus,
-  enn die checkbox "Eigene Temlates verwenden" nicht ausgewählt ist.
-- Füge eine "Testen" Funktion bei Gerät ein. Diese versucht einen Request auf die
-  Telemetrie-Url auszuführen. hat das Erfolg, wird eine positive Bestätigung angegeben.
-  Kommt es zu einem Fehler, wird der Fehlergrund in einem Pop-Up-Fenster angezeigt.  
+- Füge in der Konfiguration eine Eingabe hinzu, in der der Pfad zum telegraf Executable
+  angegeben werden kann. Das ist ein Textfeld mit einem File-Chooser, wie bei der
+  Verzeichnisauswahl.  
+  Ergänze zusätzlich noch einen Knopf, mit dem man telegraf direkt herunterladen und entpacken kann.  Danach soll sich das Programm den Pfad korrekt auswählen aus dem heruntergeladenen und entpackten telegraf executable. In den Windows und Linux Versionen sind die an verschiedenen Stellen.  
+  Der Pfad zum telegraf Executable muss in die Konfiguration mit aufgenommen werden.
