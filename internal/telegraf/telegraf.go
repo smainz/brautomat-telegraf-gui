@@ -15,6 +15,8 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,7 +29,72 @@ import (
 
 // Version ist die telegraf-Version, die "telegraf herunterladen…" in
 // der GUI installiert. Bei Bedarf hier zentral anheben.
+//
+// WICHTIG: Wird Version geändert, MUSS die checksums-Map weiter unten
+// mit den neuen, offiziell veröffentlichten SHA256-Werten aktualisiert
+// werden - sonst schlägt der Download für JEDE Plattform mit einem
+// Prüfsummenfehler fehl (das ist beabsichtigt, siehe expectedChecksum:
+// lieber "fail closed" als eine nicht verifizierte Datei auszuführen).
 const Version = "1.39.1"
+
+// checksums enthält die von InfluxData offiziell veröffentlichten
+// SHA256-Prüfsummen für Version, übernommen aus der "Packages"-Tabelle
+// des GitHub-Release: https://github.com/influxdata/telegraf/releases/tag/v1.39.1
+// (Stand der Prüfung: die dortige Tabelle ist die verlässlichste Quelle -
+// auf influxdata.com/downloads sowie docs.influxdata.com waren beim
+// Nachprüfen widersprüchliche/falsch zugeordnete SHA256-Werte für
+// dieselbe Datei zu finden, vermutlich durch fehlerhafte
+// Seiten-Generierung; die GitHub-Tabelle war in sich konsistent).
+var checksums = map[string]string{
+	"linux_amd64":   "d9194fb73fadc18f88d7d6649a2e018168028bedec1fdbc5fb655aaed120647a",
+	"linux_arm64":   "ed46395c24c47f8360db9d1f0c8684640368879d2aa7fc41e6fe0f8a878990cd",
+	"windows_amd64": "b68a1cd98c933d02fc5c1adcc2c0e1f19078e692dd47c47cdc122e552cb3b465",
+	"windows_arm64": "0d452cf167a6f1c2d82b27b52c4cdd9783aa342925c6138091da0dc5a7438d57",
+	"darwin_amd64":  "653c8a4b5afe66b0a6223952853de9f4d9ad4387b62858248fcad1ff4021e060",
+	"darwin_arm64":  "cb0be878c76cf64d26da63ef77f9fa683ede2b1a79bcbfcbfed836bad16200e0",
+}
+
+// expectedChecksum liefert die für die aktuell laufende Plattform
+// hinterlegte SHA256-Prüfsumme. Gibt es dafür keinen Eintrag (z.B. eine
+// von der App aktuell nicht unterstützte Architektur), wird der Download
+// bewusst abgelehnt, statt unverifiziert fortzufahren.
+func expectedChecksum() (string, error) {
+	key := runtime.GOOS + "_" + runtime.GOARCH
+	sum, ok := checksums[key]
+	if !ok {
+		return "", fmt.Errorf(
+			"keine bekannte Prüfsumme für %s (Version %s) hinterlegt - Download wird aus Sicherheitsgründen abgelehnt",
+			key, Version,
+		)
+	}
+	return sum, nil
+}
+
+// verifyChecksum berechnet die SHA256-Prüfsumme von path und vergleicht
+// sie mit expected. Bei einer Abweichung wird ein Fehler zurückgegeben -
+// der Aufrufer MUSS die Datei dann verwerfen und darf sie nicht
+// entpacken/ausführen (siehe DownloadAndExtract).
+func verifyChecksum(path, expected string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("Datei %q konnte für die Prüfsummenkontrolle nicht geöffnet werden: %w", path, err)
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return fmt.Errorf("Prüfsumme konnte nicht berechnet werden: %w", err)
+	}
+
+	actual := hex.EncodeToString(h.Sum(nil))
+	if !strings.EqualFold(actual, expected) {
+		return fmt.Errorf(
+			"Prüfsumme stimmt nicht überein (erwartet %s, erhalten %s) - Download wird verworfen, da die Datei möglicherweise beschädigt oder manipuliert wurde",
+			expected, actual,
+		)
+	}
+	return nil
+}
 
 // downloadTimeout begrenzt, wie lange der gesamte Download (inkl.
 // Lesen des Response-Bodys) maximal dauern darf, damit der Vorgang
@@ -100,6 +167,14 @@ func DownloadAndExtract(destDir string, onStatus StatusFunc, onProgress Progress
 		return "", err
 	}
 
+	// Vor dem Download prüfen, ob für diese Plattform/Version überhaupt
+	// eine Prüfsumme hinterlegt ist - lieber gar nicht erst herunterladen
+	// als später eine unverifizierte Datei wieder zu verwerfen.
+	expectedSum, err := expectedChecksum()
+	if err != nil {
+		return "", err
+	}
+
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return "", fmt.Errorf("Verzeichnis %q konnte nicht angelegt werden: %w", destDir, err)
 	}
@@ -110,6 +185,11 @@ func DownloadAndExtract(destDir string, onStatus StatusFunc, onProgress Progress
 		return "", err
 	}
 	defer os.Remove(archivePath)
+
+	onStatus("Prüfe Prüfsumme…")
+	if err := verifyChecksum(archivePath, expectedSum); err != nil {
+		return "", err
+	}
 
 	onStatus("Entpacke Archiv…")
 	if err := extract(archivePath, destDir); err != nil {

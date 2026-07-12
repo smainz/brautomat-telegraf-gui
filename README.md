@@ -202,10 +202,18 @@ lässt sich festlegen, welche telegraf-Binary verwendet wird:
   Verzeichnis-Suche.
 
   Während des Downloads erscheint ein Fortschrittsfenster mit
-  Zwischenzuständen ("Lade herunter…", "Entpacke Archiv…", "Suche
-  telegraf-Executable…") sowie einem Fortschrittsbalken (zeigt
-  Byte-Fortschritt/Prozent, sofern der Server eine Content-Length
+  Zwischenzuständen ("Lade herunter…", "Prüfe Prüfsumme…", "Entpacke
+  Archiv…", "Suche telegraf-Executable…") sowie einem Fortschrittsbalken
+  (zeigt Byte-Fortschritt/Prozent, sofern der Server eine Content-Length
   liefert - sonst läuft der Balken unbestimmt weiter).
+
+  **Prüfsummenkontrolle:** Nach dem Download wird die SHA256-Prüfsumme
+  des Archivs gegen die von InfluxData offiziell veröffentlichten Werte
+  geprüft (hinterlegt in `internal/telegraf/telegraf.go`, passend zur
+  dort gepinnten `Version`). Stimmt die Prüfsumme nicht, wird die Datei
+  verworfen und ein Fehler angezeigt statt sie zu entpacken/verwenden.
+  Gibt es für die aktuell laufende Plattform keine hinterlegte
+  Prüfsumme, wird der Download gar nicht erst gestartet.
 
 Der Pfad ist Teil der Konfiguration (`telegrafPath`-Feld) und wird beim
 Speichern/Laden mit berücksichtigt.

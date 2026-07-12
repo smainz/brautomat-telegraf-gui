@@ -210,7 +210,19 @@ Brautomat erreichbar zu haben.
   `telegraf:log`/`telegraf:status` beim Start von telegraf selbst) -
   `internal/telegraf.DownloadAndExtract()` nimmt dafür `StatusFunc`/
   `ProgressFunc`-Callbacks entgegen, die in `app.go` auf
-  `runtime.EventsEmit` gemappt werden.
+  `runtime.EventsEmit` gemappt werden. Nach dem Download wird die
+  SHA256-Prüfsumme des Archivs gegen `checksums` in `telegraf.go`
+  geprüft (fail closed: unbekannte Plattform/Version -> Download wird
+  abgelehnt; Mismatch -> Datei wird verworfen, nicht entpackt). **Wird
+  `Version` in `telegraf.go` angehoben, MUSS `checksums` mit den neuen,
+  offiziellen SHA256-Werten aus der GitHub-Release-Tabelle
+  (`https://github.com/influxdata/telegraf/releases/tag/vX.Y.Z`)
+  synchron aktualisiert werden** - sonst schlägt der Download für jede
+  Plattform fehl. Nicht die Werte von influxdata.com/downloads oder
+  docs.influxdata.com übernehmen, ohne sie gegen die GitHub-Tabelle
+  gegenzuprüfen - dort wurden beim Erstellen dieser Prüfung
+  widersprüchliche/falsch zugeordnete Werte für dieselbe Datei
+  gefunden.
 
 - **TelegrafLogLevel** (`cfg.TelegrafLogLevel`, Werte `"quiet"`/`"info"`/
   `"debug"`, Default `"info"`): steuert telegrafs eigene
