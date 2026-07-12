@@ -1,0 +1,283 @@
+{
+  "id": null,
+  "uid": "brautomat-influxdb",
+  "title": "Brautomat (InfluxDB)",
+  "description": "Messwerte aus der InfluxDB-Testinstanz (siehe docker-compose.yml). Anders als bei den Postgres-/MySQL-Varianten dieses Dashboards gibt es hier KEINE Annotation für Modus-/Rastschritt-Wechsel in den Graphen: Flux bietet keine einfache LAG-äquivalente Funktion, um Tag-Wechsel zwischen aufeinanderfolgenden Punkten zu erkennen. Das oberste Panel zeigt Modus und Rastschritt trotzdem korrekt als eigene Zeitleisten. Maische/Sudkessel/HLT liegen in eigenen, standardmäßig eingeklappten Zeilen - nur die gerade benötigte muss aufgeklappt werden.",
+  "tags": ["brautomat", "influxdb"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "version": 1,
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "state-timeline",
+      "title": "Modus & Rastschritt",
+      "description": "Verlauf von Modus und Rastschritt als eigene Zeitleisten.",
+      "datasource": { "type": "influxdb", "uid": "influxdb-brautomat" },
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 0, "fillOpacity": 70 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Modus" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "idle": { "text": "Leerlauf" },
+                      "mash": { "text": "Maischen" },
+                      "fermenter": { "text": "Gärung" },
+                      "manual": { "text": "Manuell" },
+                      "autotune": { "text": "Autotune" },
+                      "": { "text": "Kein Modus" }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showValue": "auto",
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"mash_temperature\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"mode\", \"stepName\"])\n  |> rename(columns: {mode: \"Modus\", stepName: \"Rastschritt\"})\n  |> sort(columns: [\"_time\"])"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Maische (Mash)",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 4 },
+      "panels": [
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Maische (Mash)",
+          "datasource": { "type": "influxdb", "uid": "influxdb-brautomat" },
+          "gridPos": { "h": 9, "w": 24, "x": 0, "y": 5 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "celsius",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "showPoints": "never",
+                "spanNulls": true,
+                "axisPlacement": "auto",
+                "axisWidth": 60
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Soll-Temperatur (°C)" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Heizleistung (%)" },
+                "properties": [
+                  { "id": "unit", "value": "percent" },
+                  { "id": "min", "value": 0 },
+                  { "id": "max", "value": 100 },
+                  { "id": "custom.axisPlacement", "value": "right" },
+                  { "id": "custom.fillOpacity", "value": 25 }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+            "tooltip": { "mode": "multi", "sort": "none" }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"mash_temperature\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Ist-Temperatur (°C)\"})\n  |> sort(columns: [\"_time\"])"
+            },
+            {
+              "refId": "B",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"mash_target_temperature\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Soll-Temperatur (°C)\"})\n  |> sort(columns: [\"_time\"])"
+            },
+            {
+              "refId": "C",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"mash_power_percent\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Heizleistung (%)\"})\n  |> sort(columns: [\"_time\"])"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Sudkessel (Boil Kettle)",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "panels": [
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "Sudkessel (Boil Kettle)",
+          "datasource": { "type": "influxdb", "uid": "influxdb-brautomat" },
+          "gridPos": { "h": 9, "w": 24, "x": 0, "y": 6 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "celsius",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "showPoints": "never",
+                "spanNulls": true,
+                "axisPlacement": "auto",
+                "axisWidth": 60
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Soll-Temperatur (°C)" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Heizleistung (%)" },
+                "properties": [
+                  { "id": "unit", "value": "percent" },
+                  { "id": "min", "value": 0 },
+                  { "id": "max", "value": 100 },
+                  { "id": "custom.axisPlacement", "value": "right" },
+                  { "id": "custom.fillOpacity", "value": 25 }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+            "tooltip": { "mode": "multi", "sort": "none" }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"boil_kettle_temperature\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Ist-Temperatur (°C)\"})\n  |> sort(columns: [\"_time\"])"
+            },
+            {
+              "refId": "B",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"boil_kettle_target_temperature\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Soll-Temperatur (°C)\"})\n  |> sort(columns: [\"_time\"])"
+            },
+            {
+              "refId": "C",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"boil_kettle_power_percent\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Heizleistung (%)\"})\n  |> sort(columns: [\"_time\"])"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "HLT",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "panels": [
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "HLT",
+          "datasource": { "type": "influxdb", "uid": "influxdb-brautomat" },
+          "gridPos": { "h": 9, "w": 24, "x": 0, "y": 7 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "celsius",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "showPoints": "never",
+                "spanNulls": true,
+                "axisPlacement": "auto",
+                "axisWidth": 60
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Soll-Temperatur (°C)" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Heizleistung (%)" },
+                "properties": [
+                  { "id": "unit", "value": "percent" },
+                  { "id": "min", "value": 0 },
+                  { "id": "max", "value": 100 },
+                  { "id": "custom.axisPlacement", "value": "right" },
+                  { "id": "custom.fillOpacity", "value": 25 }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+            "tooltip": { "mode": "multi", "sort": "none" }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"hlt_temperature\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Ist-Temperatur (°C)\"})\n  |> sort(columns: [\"_time\"])"
+            },
+            {
+              "refId": "B",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"hlt_target_temperature\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Soll-Temperatur (°C)\"})\n  |> sort(columns: [\"_time\"])"
+            },
+            {
+              "refId": "C",
+              "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"brautomat_telemetry\" and r._field == \"hlt_power_percent\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> rename(columns: {_value: \"Heizleistung (%)\"})\n  |> sort(columns: [\"_time\"])"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

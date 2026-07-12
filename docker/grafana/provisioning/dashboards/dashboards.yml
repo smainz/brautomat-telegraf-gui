@@ -1,0 +1,17 @@
+# Grafana-Dashboard-Provisioning: lädt alle Dashboard-JSONs unter
+# ./files automatisch in den Ordner "Brautomat", sobald der
+# Grafana-Container startet - kein manueller Import über die UI nötig.
+
+apiVersion: 1
+
+providers:
+  - name: Brautomat
+    orgId: 1
+    folder: Brautomat
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards/files
+      foldersFromFilesStructure: false

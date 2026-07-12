@@ -1,12 +1,22 @@
-# Docker Compose für lokale Test-Datenbanken (Postgres + MariaDB).
+# Docker Compose für lokale Test-Datenbanken (Postgres + MariaDB + InfluxDB)
+# sowie Grafana zur Visualisierung.
 #
-# Nur zum manuellen Testen der MQTT und Postgres-/MySQL-Ziele gedacht
-# - keine Produktionskonfiguration.
+# Nur zum manuellen Testen der MQTT-, Postgres-/MySQL- und InfluxDB-Ziele
+# gedacht - keine Produktionskonfiguration.
 #
 # Zugangsdaten sind bewusst simpel und # entsprechen den Vorbelegungen
-# im Formular (Datenbank/Benutzer "brautomat"), damit man in der GUI
-# nur noch das Passwort eintragen muss.
+# im Formular (Datenbank/Benutzer "brautomat", InfluxDB-Bucket "brautomat"),
+# damit man in der GUI möglichst wenig von Hand eintragen muss. Für
+# InfluxDB sind Org/Bucket/Token bereits vorbelegt (siehe
+# DOCKER_INFLUXDB_INIT_*) und müssen im Formular nur noch übernommen werden.
 # Der MQTT-Server erfordert keine Zugangsdaten
+#
+# Grafana (Login brautomat/brautomat, siehe GF_SECURITY_ADMIN_*) bringt
+# PostgreSQL, MySQL und InfluxDB bereits als vorkonfigurierte Datasources
+# mit (Provisioning-Datei: docker/grafana/provisioning/datasources/datasources.yml,
+# passend zu den Zugangsdaten der jeweiligen Service-Definition oben) -
+# nach dem Login unter "Connections" direkt nutzbar, kein manuelles
+# Einrichten nötig.
 #
 # Start:   docker compose up -d
 # Stop:    docker compose down
@@ -42,6 +52,20 @@ services:
     volumes:
       - /var/lib/mysql
 
+  influxdb:
+    image: influxdb:2
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: brautomat
+      DOCKER_INFLUXDB_INIT_PASSWORD: brautomat
+      DOCKER_INFLUXDB_INIT_ORG: brautomat
+      DOCKER_INFLUXDB_INIT_BUCKET: brautomat
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: brautomat-token
+    ports:
+      - "8086:8086"
+    volumes:
+      - /var/lib/influxdb2
+
   mosquitto:
     image: eclipse-mosquitto:2
     ports:
@@ -49,6 +73,21 @@ services:
       # - 8883:8883
       # - 9001:9001
     volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
+      - /mosquitto/config
+      - /mosquitto/data
+      - /mosquitto/log
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_USER: brautomat
+      GF_SECURITY_ADMIN_PASSWORD: brautomat
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - /var/lib/grafana
+    depends_on:
+      - postgres
+      - mariadb
+      - influxdb

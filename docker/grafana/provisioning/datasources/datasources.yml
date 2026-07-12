@@ -1,0 +1,55 @@
+# Grafana-Datasource-Provisioning für die lokalen Testinstanzen aus
+# docker-compose.yml. Wird beim Start des Grafana-Containers automatisch
+# eingelesen (siehe Volume-Mount in docker-compose.yml) - keine manuelle
+# Einrichtung über die Grafana-UI nötig.
+#
+# Zugangsdaten entsprechen 1:1 den Umgebungsvariablen der jeweiligen
+# Service-Definition in docker-compose.yml.
+#
+# Die "uid"-Felder sind bewusst fest vergeben (statt Grafana eine
+# zufällige uid generieren zu lassen): mitgelieferte Dashboards (siehe
+# docker/grafana/provisioning/dashboards/) referenzieren die
+# Datasources über genau diese uids. Werden sie geändert, müssen alle
+# Dashboard-JSONs entsprechend angepasst werden.
+
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL (brautomat)
+    uid: postgres-brautomat
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: brautomat
+    user: brautomat
+    editable: true
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+    secureJsonData:
+      password: brautomat
+
+  - name: MySQL (brautomat)
+    uid: mysql-brautomat
+    type: mysql
+    access: proxy
+    url: mariadb:3306
+    database: brautomat
+    user: brautomat
+    editable: true
+    secureJsonData:
+      password: brautomat
+
+  - name: InfluxDB (brautomat)
+    uid: influxdb-brautomat
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    editable: true
+    jsonData:
+      version: Flux
+      organization: brautomat
+      defaultBucket: brautomat
+      httpMode: POST
+    secureJsonData:
+      token: brautomat-token

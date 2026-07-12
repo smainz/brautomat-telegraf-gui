@@ -1,0 +1,315 @@
+{
+  "id": null,
+  "uid": "brautomat-mysql",
+  "title": "Brautomat (MySQL)",
+  "description": "Messwerte aus der MariaDB-Testdatenbank (siehe docker-compose.yml). Modus- und Rastschritt-Wechsel erscheinen als Annotation (vertikale Linie mit Tooltip) in jedem Graphen. Maische/Sudkessel/HLT liegen in eigenen, standardmäßig eingeklappten Zeilen - nur die gerade benötigte muss aufgeklappt werden.",
+  "tags": ["brautomat", "mysql"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "version": 1,
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "Modus- / Rastschrittwechsel",
+        "enable": true,
+        "hide": false,
+        "iconColor": "orange",
+        "datasource": { "type": "mysql", "uid": "mysql-brautomat" },
+        "target": {
+          "rawQuery": true,
+          "rawSql": "SELECT `timestamp` AS `time`, CONCAT('Modus: ', mode, ' / Rastschritt: ', COALESCE(stepName, '-')) AS `text` FROM (SELECT `timestamp`, mode, stepName, LAG(mode) OVER (ORDER BY `timestamp`) AS prev_mode, LAG(stepName) OVER (ORDER BY `timestamp`) AS prev_step FROM brautomat_telemetry) changes WHERE $__timeFilter(`timestamp`) AND (NOT (mode <=> prev_mode) OR NOT (stepName <=> prev_step)) ORDER BY `timestamp`",
+          "format": "table"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "state-timeline",
+      "title": "Modus & Rastschritt",
+      "description": "Verlauf von Modus und Rastschritt als eigene Zeitleisten - dieselben Wechsel, die auch als Annotation in den Graphen unten erscheinen.",
+      "datasource": { "type": "mysql", "uid": "mysql-brautomat" },
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 0, "fillOpacity": 70 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Modus" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "idle": { "text": "Leerlauf" },
+                      "mash": { "text": "Maischen" },
+                      "fermenter": { "text": "Gärung" },
+                      "manual": { "text": "Manuell" },
+                      "autotune": { "text": "Autotune" },
+                      "": { "text": "Kein Modus" }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showValue": "auto",
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT `timestamp` AS `time`, mode AS `Modus`, stepName AS `Rastschritt` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Maische (Mash)",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 4 },
+      "panels": [
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Maische (Mash)",
+          "datasource": { "type": "mysql", "uid": "mysql-brautomat" },
+          "gridPos": { "h": 9, "w": 24, "x": 0, "y": 5 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "celsius",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "showPoints": "never",
+                "spanNulls": true,
+                "axisPlacement": "auto",
+                "axisWidth": 60
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Soll-Temperatur (°C)" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Heizleistung (%)" },
+                "properties": [
+                  { "id": "unit", "value": "percent" },
+                  { "id": "min", "value": 0 },
+                  { "id": "max", "value": 100 },
+                  { "id": "custom.axisPlacement", "value": "right" },
+                  { "id": "custom.fillOpacity", "value": 25 }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+            "tooltip": { "mode": "multi", "sort": "none" }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, mash_temperature AS `Ist-Temperatur (°C)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            },
+            {
+              "refId": "B",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, mash_target_temperature AS `Soll-Temperatur (°C)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            },
+            {
+              "refId": "C",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, mash_power_percent AS `Heizleistung (%)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Sudkessel (Boil Kettle)",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "panels": [
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "Sudkessel (Boil Kettle)",
+          "datasource": { "type": "mysql", "uid": "mysql-brautomat" },
+          "gridPos": { "h": 9, "w": 24, "x": 0, "y": 6 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "celsius",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "showPoints": "never",
+                "spanNulls": true,
+                "axisPlacement": "auto",
+                "axisWidth": 60
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Soll-Temperatur (°C)" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Heizleistung (%)" },
+                "properties": [
+                  { "id": "unit", "value": "percent" },
+                  { "id": "min", "value": 0 },
+                  { "id": "max", "value": 100 },
+                  { "id": "custom.axisPlacement", "value": "right" },
+                  { "id": "custom.fillOpacity", "value": 25 }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+            "tooltip": { "mode": "multi", "sort": "none" }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, boil_kettle_temperature AS `Ist-Temperatur (°C)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            },
+            {
+              "refId": "B",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, boil_kettle_target_temperature AS `Soll-Temperatur (°C)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            },
+            {
+              "refId": "C",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, boil_kettle_power_percent AS `Heizleistung (%)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "HLT",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "panels": [
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "HLT",
+          "datasource": { "type": "mysql", "uid": "mysql-brautomat" },
+          "gridPos": { "h": 9, "w": 24, "x": 0, "y": 7 },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "celsius",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "showPoints": "never",
+                "spanNulls": true,
+                "axisPlacement": "auto",
+                "axisWidth": 60
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Soll-Temperatur (°C)" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "Heizleistung (%)" },
+                "properties": [
+                  { "id": "unit", "value": "percent" },
+                  { "id": "min", "value": 0 },
+                  { "id": "max", "value": 100 },
+                  { "id": "custom.axisPlacement", "value": "right" },
+                  { "id": "custom.fillOpacity", "value": 25 }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+            "tooltip": { "mode": "multi", "sort": "none" }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, hlt_temperature AS `Ist-Temperatur (°C)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            },
+            {
+              "refId": "B",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, hlt_target_temperature AS `Soll-Temperatur (°C)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            },
+            {
+              "refId": "C",
+              "rawQuery": true,
+              "format": "time_series",
+              "rawSql": "SELECT `timestamp` AS `time`, hlt_power_percent AS `Heizleistung (%)` FROM brautomat_telemetry WHERE $__timeFilter(`timestamp`) ORDER BY `timestamp`"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

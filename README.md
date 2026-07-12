@@ -55,6 +55,9 @@ CSV/InfluxDB/Postgres/MySQL/MQTT - diese Arbeit macht Telegraf anhand der
 generierten Konfiguration. Das hält die App klein und nutzt die
 ausgereiften, bereits vorhandenen Telegraf-Output-Plugins.
 
+Zur Anzeige der geschriebenen Messwerte liegen fertige Beispiel-Dashboards
+für Grafana bei (siehe [Test-Datenbanken / MQTT-Server / Grafana](#test-datenbanken--mqtt-server--grafana-postgresmariadbinfluxdbmosqittografana)).
+
 ## Nutzung
 
 ### Oberfläche
@@ -370,7 +373,12 @@ brautomat-telegraf-gui/
 │       ├── tabs.js                  # Reine UI-Logik: Top-Level-Tabs + Ziele-Unter-Tabs
 │       └── style.css
 ├── bin/                              # Hier die telegraf-Binary pro Zielplattform ablegen
-├── docker-compose.yml                # Lokale MQTT/Postgres/MariaDB-Testinstanzen (siehe Entwicklung)
+├── docker-compose.yml                # Lokale MQTT/Postgres/MariaDB/InfluxDB/Grafana-Testinstanzen (siehe Entwicklung)
+├── docker/
+│   └── grafana/
+│       └── provisioning/
+│           └── datasources/
+│               └── datasources.yml  # Grafana-Datasource-Provisioning (Postgres/MySQL/InfluxDB), siehe Entwicklung
 └── tools/
     └── mock-server/
         └── main.go                   # Eigenständiger Mock für /telemetry (Entwicklung ohne echtes Gerät)
@@ -432,12 +440,13 @@ eine andere Spaltenreihenfolge definiert wird.
 wails dev
 ```
 
-### Test-Datenbanken / MQTT-Server (Postgres/MariaDB/Mosqitto)
+### Test-Datenbanken / MQTT-Server / Grafana (Postgres/MariaDB/InfluxDB/Mosqitto/Grafana)
 
-`docker-compose.yml` im Projekt-Root startet lokale Postgres- und
-MariaDB-Instanzen sowie einen MQTT-Server zum Testen der entsprechenden
-Ziele, mit auf den Hostrechner exponierten Standardports (5432 und 3306
-bzw. 1883 für den MQTT-Server) und Daten in anonymen Volumes:
+`docker-compose.yml` im Projekt-Root startet lokale Postgres-, MariaDB-
+und InfluxDB-Instanzen, einen MQTT-Server sowie Grafana zur
+Visualisierung der geschriebenen Daten, mit auf den Hostrechner
+exponierten Standardports (5432, 3306, 8086, 1883 für den MQTT-Server
+bzw. 3000 für Grafana) und Daten in anonymen Volumes:
 
 ```
 docker compose up -d
@@ -448,8 +457,80 @@ Datenbank und Benutzer heißen jeweils `brautomat` (Passwort `brautomat`)
 - das entspricht den Vorbelegungen im PostgreSQL-/MySQL-Tab der GUI, es
 muss dort also nur noch das Passwort (`brautomat`) eingetragen werden.
 
+- **Tabellenstruktur:** Telegraf legt die Tabelle `brautomat_telemetry`
+  beim ersten Schreiben selbst an (`table_template` in
+  `outputs-postgres.conf.tmpl`/`outputs-mysql.conf.tmpl`). Für Postgres:
+
+  ```sql
+  CREATE TABLE public.brautomat_telemetry (
+      "timestamp" timestamp NULL,
+      "mode" text NULL,
+      "stepName" text NULL,
+      url text NULL,
+      step float4 NULL,
+      mash_temperature float4 NULL,
+      mash_target_temperature float4 NULL,
+      mash_power_percent float4 NULL,
+      boil_kettle_temperature float4 NULL,
+      boil_kettle_target_temperature float4 NULL,
+      boil_kettle_power_percent float4 NULL,
+      hlt_temperature float4 NULL,
+      hlt_target_temperature float4 NULL,
+      hlt_power_percent float4 NULL,
+      fermenter_temperature float4 NULL,
+      fermenter_target_temperature float4 NULL
+  );
+  ```
+
+  Die Zeitspalte heißt `timestamp`, nicht `time` - wichtig für eigene
+  SQL-Abfragen/Dashboards (siehe `$__timeFilter(timestamp)` in den
+  mitgelieferten Grafana-Dashboards unter
+  `docker/grafana/provisioning/dashboards/files/`). `url` wird
+  automatisch von `inputs.http` als Tag ergänzt (abgefragte
+  Geräte-URL); `step` ist das rohe, nicht umbenannte `step`-Feld
+  (Index des aktiven Rastschritts) aus der Geräte-JSON. MySQL/MariaDB
+  erhält bei aktiviertem MySQL-Ziel dieselbe Struktur mit
+  MySQL-Datentypen.
+
 - Der MQTT-Server erfordert keine Authentifizierung. Benutzer und Paswort 
   leer lassen
+
+- **InfluxDB:** Der Container ist über `DOCKER_INFLUXDB_INIT_*` bereits
+  fertig eingerichtet (kein manuelles Setup über die InfluxDB-UI nötig).
+  Im InfluxDB-Tab der GUI eintragen:
+
+  | Feld | Wert |
+  |---|---|
+  | URL | `http://localhost:8086` |
+  | Org | `brautomat` |
+  | Bucket | `brautomat` |
+  | Token | `brautomat-token` |
+
+  Die InfluxDB-UI selbst ist unter `http://localhost:8086` erreichbar
+  (Login `brautomat`/`brautomat`), falls man die geschriebenen Daten
+  direkt einsehen möchte.
+
+- **Grafana:** unter `http://localhost:3000` erreichbar (Login
+  `brautomat`/`brautomat`, siehe `GF_SECURITY_ADMIN_*` in
+  `docker-compose.yml`). PostgreSQL, MySQL und InfluxDB sind bereits als
+  Datasources vorkonfiguriert (Provisioning-Datei:
+  `docker/grafana/provisioning/datasources/datasources.yml`, wird beim
+  Containerstart automatisch eingelesen) - unter "Connections" direkt
+  nutzbar, kein manuelles Einrichten nötig. Die CSV- und MQTT-Ziele haben
+  keine Entsprechung als Grafana-Datasource und sind daher nicht
+  enthalten.
+
+- **Dashboards:** Für Postgres, MySQL und InfluxDB liegt je ein fertiges
+  Beispiel-Dashboard bei (`docker/grafana/provisioning/dashboards/files/`),
+  das beim Containerstart automatisch in den Grafana-Ordner "Brautomat"
+  provisioniert wird - kein manueller Import nötig. Alle drei zeigen
+  dieselben Inhalte: eine Zeitleiste für Modus/Rastschritt oben, darunter
+  je eine eigene, standardmäßig eingeklappte Zeile für Maische, Sudkessel
+  und HLT mit Ist-/Soll-Temperatur und Heizleistung. Bei Postgres und
+  MySQL erscheinen Modus-/Rastschritt-Wechsel zusätzlich als Annotation
+  (vertikale Linie) in diesen Graphen; beim InfluxDB-Dashboard fehlt das
+  bewusst, da Flux dafür keine einfache, robuste Möglichkeit bietet,
+  Wechsel zwischen aufeinanderfolgenden Punkten zu erkennen.
 
 ```
 docker compose down             # Container stoppen, Daten bleiben erhalten

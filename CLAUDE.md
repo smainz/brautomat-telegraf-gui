@@ -40,7 +40,8 @@ frontend/
 bin/                          Hier liegt (nach Download) die telegraf-Binary pro Zielplattform
 tools/
   mock-server/main.go         Eigenständiger /telemetry-Mock für die Entwicklung (reines stdlib, kein Wails-Import)
-docker-compose.yml             Lokale MQTT/Postgres/MariaDB-Testinstanzen (Datenbank/User "brautomat", MQTT_Server erfordert keine User/Passwort, anonyme Volumes)
+docker-compose.yml             Lokale MQTT/Postgres/MariaDB/InfluxDB/Grafana-Testinstanzen (Datenbank/User "brautomat", MQTT_Server erfordert keine User/Passwort, InfluxDB via DOCKER_INFLUXDB_INIT_* vorkonfiguriert mit Org/Bucket "brautomat" + Token "brautomat-token", Grafana-Login "brautomat"/"brautomat" via GF_SECURITY_ADMIN_*, anonyme Volumes)
+docker/grafana/provisioning/   Grafana-Provisioning: datasources/datasources.yml (Postgres/MySQL/InfluxDB vorkonfiguriert mit denselben Zugangsdaten wie in docker-compose.yml - bei Änderung der dortigen Zugangsdaten/Portnummern MUSS diese Datei mitgezogen werden, sonst driften Grafana-Datasources und tatsächliche Container-Credentials auseinander) + dashboards/files/*.json (je ein analoges Beispiel-Dashboard für Postgres/MySQL/InfluxDB, siehe Konventionen unten)
 .woodpecker/
   build.yaml                   CI: Push -> Build-Check für linux/amd64, windows/amd64, darwin/amd64 (kein telegraf, kein Upload)
   release.yaml                 CI: Tag-Push -> Build + telegraf-Download + Bundle + Upload als Forgejo-Release (git.mainz.ws)
@@ -232,6 +233,27 @@ Brautomat erreichbar zu haben.
   eigene Konsolenausgabe betrifft (`options.App.LogLevel`) - beide
   Settings sind unabhängig voneinander und beeinflussen unterschiedliche
   Ausgaben.
+
+- **Grafana-Dashboards** (`docker/grafana/provisioning/dashboards/files/*.json`):
+  drei inhaltlich analoge Dashboards (Postgres/MySQL/InfluxDB), referenzieren
+  ihre Datasource über die feste `uid` aus `datasources.yml` (`postgres-brautomat`/
+  `mysql-brautomat`/`influxdb-brautomat`) - bei Änderung dieser uids müssen alle
+  drei JSONs mitgezogen werden. Postgres/MySQL nutzen `outputs.sql` und damit
+  dieselbe Tabellenstruktur (Spalte `timestamp`, siehe README.md); die
+  Modus-/Rastschritt-Wechsel-Annotation dort nutzt `LAG()` (Postgres: `IS DISTINCT
+  FROM`, MySQL/MariaDB: `<=>`, da `IS DISTINCT FROM` dort nicht existiert -
+  MySQL-seitig zudem Backtick- statt Anführungszeichen-Quoting, da Grafanas
+  MySQL-Verbindung anders als Telegrafs `outputs.sql`-Verbindung kein
+  `ANSI_QUOTES` gesetzt hat). Das InfluxDB-Dashboard nutzt Flux-Queries
+  (`from(bucket: v.bucket) |> range(...) |> filter(...)`) und hat **bewusst
+  keine** entsprechende Annotation, da Flux keine einfache Standardfunktion
+  bietet, um Tag-Wechsel zwischen aufeinanderfolgenden Punkten zu erkennen
+  (das State-Timeline-Panel oben zeigt Modus/Rastschritt trotzdem korrekt,
+  da es dafür keine Wechsel-Erkennung braucht). Alle Zeitreihen-Panels setzen
+  `fieldConfig.defaults.custom.axisWidth` fest (statt "Auto"), damit die
+  Graphen unabhängig von der Textlänge der Achsenbeschriftung untereinander
+  bündig sind - das State-Timeline-Panel unterstützt `axisWidth` nicht
+  (Grafana-Einschränkung), bleibt daher unangepasst.
 
 - **"Testen"-Button/Verbindungstest** (`TestDeviceConnection` in `app.go`):
   führt einen echten HTTP-GET gegen `<deviceUrl>/telemetry` aus (Timeout
