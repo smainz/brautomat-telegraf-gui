@@ -521,10 +521,31 @@ unabhängig von der Wails-App - kein `wails build`/`wails dev` nötig, nur
 
 ### Tests
 
-Es gibt aktuell keine automatisierten Tests. `internal/config`
-(Template-Rendering) ist reines Go ohne Wails-Abhängigkeit und lässt
-sich problemlos mit `go test` isoliert testen - das wäre der
-sinnvollste Einstiegspunkt für künftige Tests.
+```
+go test ./...
+```
+
+Läuft ohne besonderes Setup (kein Docker, keine echte telegraf-Binary
+nötig) und deckt `internal/config`, `internal/telegraf`,
+`internal/process` sowie die App-Logik in `app.go` ab (Template-
+Rendering inkl. TOML-Escaping, CSV-Header, Config speichern/laden,
+Zip-Slip-Schutz beim Entpacken, Prozess-Lebenszyklus, Geräte-
+Verbindungstest). Diese Pakete hängen bewusst nicht von Wails ab und
+sind daher isoliert mit `go test` testbar.
+
+`internal/process` baut sich dafür beim Testlauf über einen `go build`-
+Aufruf einen winzigen Test-Helferprozess (`internal/process/testdata/
+fakeproc`) - `go` muss also im `PATH` verfügbar sein, sonst aber nichts
+Zusätzliches.
+
+Ein Test (`TestRunner_StopEscalatesToSIGKILL`, nur unter Linux/macOS)
+prüft die SIGTERM->SIGKILL-Eskalation aus `process_unix.go` und wartet
+dafür absichtlich die vollen 5s Timeout ab. Für einen schnellen
+Testlauf ohne diesen Test:
+
+```
+go test ./... -short
+```
 
 ## CI/CD (Woodpecker)
 
