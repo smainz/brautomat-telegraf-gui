@@ -29,7 +29,7 @@ func DefaultConfigPath() (string, error) {
 // Unterordner beim allerersten Speichern noch nicht existiert).
 //
 // Ist cfg.SavePasswords nicht gesetzt (Default), werden InfluxDB-Token
-// sowie Postgres-/MySQL-Passwort vor dem Schreiben entfernt (siehe
+// sowie Postgres-/MySQL-/MQTT-Passwort vor dem Schreiben entfernt (siehe
 // stripSecrets) - unabhängig davon, was der Aufrufer sonst noch in cfg
 // übergeben hat. Diese Durchsetzung sitzt bewusst hier im Backend statt
 // nur im Frontend, damit sie auch bei zukünftigen Aufrufstellen sicher

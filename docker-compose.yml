@@ -20,7 +20,7 @@
 #
 # Start:   docker compose up -d
 # Stop:    docker compose down
-# Stop + Daten löschen: docker compose down --vvolumes
+# Stop + Daten löschen: docker compose down --volumes
 #
 # Daten liegen in anonymen Volumes (kein Name vergeben) - die bleiben
 # über "docker compose down" hinweg erhalten, werden aber nicht

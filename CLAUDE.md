@@ -1,6 +1,26 @@
 # CLAUDE.md
 
-Kontext für Claude Code zu diesem Projekt. Bitte vor größeren Änderungen lesen.
+Anweisungen für Claude Code zu diesem Projekt.
+
+## Arbeitsweise (zuerst lesen)
+
+- Lies diese Datei vollständig, bevor du größere Änderungen vornimmst.
+- Es gibt keine automatisierten Tests (siehe „Build & Test"). Nach jeder
+  Go-Änderung mindestens `go build ./...` laufen lassen, bevor du die
+  Aufgabe als erledigt meldest.
+- README.md und CLAUDE.md beschreiben teils dieselben Dinge aus
+  unterschiedlicher Perspektive (Nutzer- vs. Architektursicht).
+  Änderst du CLI-Flags, CI-Pipelines, Template-Dateien oder
+  Konfigurationsverhalten, halte alle betroffenen Dateien konsistent -
+  in diesem Repo ist Doku-Drift zwischen ihnen bereits mehrfach
+  vorgekommen (z. B. veraltete CI-Beschreibung, unvollständige
+  `--help`-Texte).
+- Bei Punkten, die unten explizit als „Offene Frage" markiert sind: nicht
+  eigenmächtig entscheiden, sondern beim Nutzer nachfragen.
+- Halte dich an die Konventionen weiter unten, bevor du eigene neue
+  Muster einführst - bei Widerspruch zwischen „naheliegender Lösung" und
+  einer hier dokumentierten Konvention hat die Konvention Vorrang (bzw.
+  kurz nachfragen, falls die Konvention veraltet wirkt).
 
 ## Was ist das
 
@@ -20,7 +40,7 @@ mitgelieferten `telegraf`-Binary in `bin/`.
 
 ```
 main.go                    Flag-Parsing (--templates-dir, --config, --export-templates, --log-level, --start-headless), printUsage() als flag.Usage (deckt --help/-h UND ungültige Flags/Argumente ab), runHeadless() für --start-headless, embed der frontend/-Assets, wails.Run()
-app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseExportTemplatesDir, ExportTemplates, ChooseSaveLogPath, SaveLog, TestDeviceConnection, ChooseTelegrafPath, DownloadTelegraf. Intern (nicht gebunden): startTelegrafCore(), initRuntimeState() - ctx-frei, auch vom Headless-Modus genutzt (siehe main.go)
+app.go                      An das Frontend gebundene API: StartTelegraf, StopTelegraf, IsRunning, GetDefaults, GetDefaultConfigPath, SaveConfig, LoadConfig, ChooseSaveConfigPath, ChooseOpenConfigPath, ChooseTemplatesDir, ChooseExportTemplatesDir, ExportTemplates, ChooseSaveLogPath, SaveLog, TestDeviceConnection, ChooseTelegrafPath, ChooseTelegrafDownloadDir, DownloadTelegraf. Intern (nicht gebunden): startTelegrafCore(), initRuntimeState() - ctx-frei, auch vom Headless-Modus genutzt (siehe main.go)
 internal/config/
   config.go                 Config-Struct = 1:1 das Formularmodell (JSON-Tags = Feldnamen im Frontend)
   templates.go              go:embed der Default-Templates + GetTemplatesFS(customDir) für --templates-dir
@@ -43,8 +63,8 @@ tools/
 docker-compose.yml             Lokale MQTT/Postgres/MariaDB/InfluxDB/Grafana-Testinstanzen (Datenbank/User "brautomat", MQTT_Server erfordert keine User/Passwort, InfluxDB via DOCKER_INFLUXDB_INIT_* vorkonfiguriert mit Org/Bucket "brautomat" + Token "brautomat-token", Grafana-Login "brautomat"/"brautomat" via GF_SECURITY_ADMIN_*, anonyme Volumes)
 docker/grafana/provisioning/   Grafana-Provisioning: datasources/datasources.yml (Postgres/MySQL/InfluxDB vorkonfiguriert mit denselben Zugangsdaten wie in docker-compose.yml - bei Änderung der dortigen Zugangsdaten/Portnummern MUSS diese Datei mitgezogen werden, sonst driften Grafana-Datasources und tatsächliche Container-Credentials auseinander) + dashboards/files/*.json (je ein analoges Beispiel-Dashboard für Postgres/MySQL/InfluxDB, siehe Konventionen unten)
 .woodpecker/
-  build.yaml                   CI: Push -> Build-Check für linux/amd64, windows/amd64, darwin/amd64 (kein telegraf, kein Upload)
-  release.yaml                 CI: Tag-Push -> Build + telegraf-Download + Bundle + Upload als Forgejo-Release (git.mainz.ws)
+  build.yaml                   CI: Push -> Build-Check für linux/amd64 und windows/amd64 (kein telegraf, kein Upload). darwin/amd64 wird NICHT gebaut (Wails v2 kann von Linux aus nicht für macOS cross-kompilieren) - nur der plattformunabhängige tools/mock-server wird zusätzlich für alle drei Zielplattformen cross-kompiliert, als reine Zusatzprüfung
+  release.yaml                 CI: Tag-Push (Branch main) -> Build für linux/amd64 + windows/amd64, packt je ein Archiv (tar.gz/zip) mit Binary + README.md und lädt beide als Forgejo-Release (git.mainz.ws) hoch. Enthält AKTUELL keinen telegraf-Download/Bundling-Schritt - die Release-Archive liefern also keine telegraf-Binary mit
 ```
 
 **Datenfluss beim Klick auf "Start":**
@@ -101,9 +121,11 @@ wails dev            # Live-Reload für Entwicklung
 wails build           # Produktions-Binary bauen (Wails-CLI muss installiert sein)
 ```
 
-Wails-CLI installieren, falls nicht vorhanden:
+Wails-CLI installieren, falls nicht vorhanden (Version an das in `go.mod`
+gepinnte `github.com/wailsapp/wails/v2` angleichen, aktuell v2.13.0 - siehe
+auch README.md/CI, die dieselbe Version verwenden):
 ```bash
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
 ```
 
 Für einen lauffähigen Build muss vorher eine passende `telegraf`- bzw.
@@ -274,18 +296,23 @@ Brautomat erreichbar zu haben.
   bewusst offengelassen worden.
 
 - **CI-Pipelines** (`.woodpecker/build.yaml`, `.woodpecker/release.yaml`):
-  Woodpecker-YAML, kein XML. Beide Dateien enthalten je drei
-  `---`-getrennte Workflows (linux/amd64, windows/amd64, darwin/amd64),
-  gesteuert über das `platform`-Feld, da Wails GUI-Builds sich nicht
-  zuverlässig von Linux aus für Windows/macOS cross-kompilieren lassen -
-  Windows/macOS brauchen echte, registrierte Agenten mit Local-Backend.
-  `release.yaml` lädt telegraf direkt von `dl.influxdata.com` (Version
-  über `TELEGRAF_VERSION` je Workflow, aktuell hart hinterlegt - bei
-  Bedarf zentral pflegen statt an drei Stellen einzeln vergessen) und
-  lädt Assets über `woodpeckerci/plugin-release` auf `git.mainz.ws`
-  hoch; der benötigte Forgejo-Token wird als Woodpecker-Secret
-  `forgejo_token` erwartet (Name bei Bedarf in allen drei
-  `publish-*`-Schritten konsistent anpassen).
+  Woodpecker-YAML, kein XML. Beide Dateien bestehen jeweils aus **einem**
+  Workflow mit einem einzigen `build`-Schritt auf demselben
+  `golang:1.25-bookworm`-Image (kein `platform`-Feld, keine separaten
+  Windows/macOS-Agenten - es steht laut den Kommentaren in `release.yaml`
+  nur ein Linux-Docker-Agent zur Verfügung). Dieser eine Schritt ruft
+  `wails build -platform ...` innerhalb desselben Containers nacheinander
+  für `linux/amd64` und `windows/amd64` auf (Cross-Compiling für
+  darwin/macOS wird von Wails v2 nicht unterstützt und daher nirgends für
+  die eigentliche App durchgeführt - `build.yaml` cross-kompiliert
+  zusätzlich nur den plattformunabhängigen `tools/mock-server` für alle
+  drei Plattformen, als reine Zusatzprüfung ohne echten GUI-Build).
+  `release.yaml` lädt KEIN telegraf herunter und bündelt keines - es
+  packt lediglich die gebaute Binary + `README.md` pro Plattform in ein
+  Archiv (tar.gz/zip) und lädt beide über `woodpeckerci/plugin-release`
+  auf `git.mainz.ws` hoch; der benötigte Forgejo-Token wird als
+  Woodpecker-Secret `forgejo_token` erwartet (Name bei Bedarf in den
+  `publish`-Schritten anpassen).
 
 ## Nicht tun
 

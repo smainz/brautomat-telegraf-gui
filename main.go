@@ -137,9 +137,10 @@ func main() {
 		"templates-dir",
 		"",
 		"Pfad zu einem Verzeichnis mit eigenen Telegraf-Config-Templates.\n"+
-			"Muss die Dateien telegraf.conf.tmpl, outputs-csv.conf.tmpl,\n"+
-			"outputs-influxdb.conf.tmpl, outputs-postgres.conf.tmpl und\n"+
-			"outputs-mysql.conf.tmpl enthalten. Wird nichts angegeben,\n"+
+			"Muss die Dateien telegraf.conf.tmpl, processors-rename.conf.tmpl,\n"+
+			"outputs-csv.conf.tmpl, outputs-influxdb.conf.tmpl,\n"+
+			"outputs-postgres.conf.tmpl, outputs-mysql.conf.tmpl und\n"+
+			"outputs-mqtt.conf.tmpl enthalten. Wird nichts angegeben,\n"+
 			"werden die im Programm eingebetteten Standard-Templates verwendet.",
 	)
 	configPath := flag.String(

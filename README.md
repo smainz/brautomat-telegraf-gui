@@ -256,7 +256,6 @@ Ein eigenes Verzeichnis muss folgende Dateien enthalten:
 - `telegraf.conf.tmpl`
 - `processors-rename.conf.tmpl`
 - `outputs-csv.conf.tmpl`
-- `processors-rename.conf.tmpl`
 - `outputs-influxdb.conf.tmpl`
 - `outputs-postgres.conf.tmpl`
 - `outputs-mysql.conf.tmpl`
@@ -328,9 +327,8 @@ wails build
 
 Für Windows/macOS/Linux jeweils auf der Zielplattform bauen (oder mit
 Wails' Cross-Compile-Unterstützung, siehe Wails-Dokumentation), und
-vorher die passende Telegraf-Binary in `bin/` legen (siehe
-`bin/README.md`). Offizielle Downloads:
-https://www.influxdata.com/downloads/
+vorher die passende Telegraf-Binary in `bin/` legen. Offizielle
+Downloads: https://www.influxdata.com/downloads/
 
 ## Entwicklung
 
@@ -384,56 +382,6 @@ brautomat-telegraf-gui/
         └── main.go                   # Eigenständiger Mock für /telemetry (Entwicklung ohne echtes Gerät)
 ```
 
-### Feldnamen und CSV-Header
-
-Das Gerät liefert seine Messwerte mit kurzen JSON-Feldnamen (`m`, `mt`,
-`mp`, `s`, `st`, `sp`, `h`, `ht`, `hp`, `f`, `ft`). Bevor die Werte an
-ein Ziel weitergereicht werden, benennt ein globaler
-`processors.rename`-Schritt (siehe `processors-rename.conf.tmpl`) diese
-in sprechende Namen um - das gilt für **alle** aktivierten Ziele
-gleichermaßen:
-
-| Kurzname | Sprechender Name |
-|---|---|
-| `m` | `mash_temperature` |
-| `mt` | `mash_target_temperature` |
-| `mp` | `mash_power_percent` |
-| `s` | `boil_kettle_temperature` |
-| `st` | `boil_kettle_target_temperature` |
-| `sp` | `boil_kettle_power_percent` |
-| `h` | `hlt_temperature` |
-| `ht` | `hlt_target_temperature` |
-| `hp` | `hlt_power_percent` |
-| `f` | `fermenter_temperature` |
-| `ft` | `fermenter_target_temperature` |
-
-Der Zeitstempel (`t`) taucht hier bewusst nicht auf: Er wird bereits
-vorher über `json_time_key = "t"` als Zeitstempel der Metrik selbst
-verwendet und existiert danach nicht mehr als eigenständiges Feld. Bei
-CSV erscheint er stattdessen als eigene `timestamp`-Spalte (siehe
-unten).
-
-**CSV-Header:** Die CSV-Datei bekommt beim Start eine feste
-Spaltenreihenfolge über `csv_columns` im CSV-Template (statt telegrafs
-Standard-Sortierung). Bevor telegraf gestartet wird, prüft die App, ob
-die Zieldatei fehlt oder leer ist (Größe 0) - falls ja, schreibt sie
-selbst die passende Kopfzeile:
-
-```
-timestamp,mode,stepName,mash_temperature,mash_target_temperature,mash_power_percent,boil_kettle_temperature,boil_kettle_target_temperature,boil_kettle_power_percent,hlt_temperature,hlt_target_temperature,hlt_power_percent,fermenter_temperature,fermenter_target_temperature
-```
-
-telegraf selbst schreibt bewusst keinen Header (`csv_header = false`),
-da es diesen sonst bei jedem Flush erneut in die Datei einfügen würde.
-Existiert die Datei bereits mit Inhalt, wird nichts verändert - so
-bleibt eine laufend erweiterte CSV-Datei über Neustarts hinweg intakt.
-
-**Bei eigenen Templates (`--templates-dir`) zu beachten:** Die
-Spaltenliste für den vorab geschriebenen Header ist in
-`internal/config/csv_header.go` hinterlegt und muss manuell mit einem
-eigenen `outputs-csv.conf.tmpl` synchron gehalten werden, falls dort
-eine andere Spaltenreihenfolge definiert wird.
-
 ### Live-Reload
 
 ```
@@ -454,7 +402,7 @@ Starten:
 docker compose up -d
 ```
 
-Stopen:
+Stoppen:
 ```
 docker compose down             # Container stoppen, Daten bleiben erhalten
 docker compose down --volumes   # Container stoppen und Daten löschen
@@ -500,7 +448,7 @@ muss dort also nur noch das Passwort (`brautomat`) eingetragen werden.
   erhält bei aktiviertem MySQL-Ziel dieselbe Struktur mit
   MySQL-Datentypen.
 
-- Der MQTT-Server erfordert keine Authentifizierung. Benutzer und Paswort 
+- Der MQTT-Server erfordert keine Authentifizierung. Benutzer und Passwort
   leer lassen
 
 - **InfluxDB:** Der Container ist über `DOCKER_INFLUXDB_INIT_*` bereits
@@ -540,7 +488,7 @@ muss dort also nur noch das Passwort (`brautomat`) eingetragen werden.
   bewusst, da Flux dafür keine einfache, robuste Möglichkeit bietet,
   Wechsel zwischen aufeinanderfolgenden Punkten zu erkennen.
   
-  ![Sampe Grafana Dashboard](doc/images/sample-grafana-dashboard.png)
+  ![Sample Grafana Dashboard](doc/images/sample-grafana-dashboard.png)
 
 ### Mock-Server für die Entwicklung
 
