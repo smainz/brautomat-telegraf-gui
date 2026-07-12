@@ -448,8 +448,16 @@ Visualisierung der geschriebenen Daten, mit auf den Hostrechner
 exponierten Standardports (5432, 3306, 8086, 1883 für den MQTT-Server
 bzw. 3000 für Grafana) und Daten in anonymen Volumes:
 
+Starten:
+
 ```
 docker compose up -d
+```
+
+Stopen:
+```
+docker compose down             # Container stoppen, Daten bleiben erhalten
+docker compose down --volumes   # Container stoppen und Daten löschen
 ```
 
 Datenbank und Benutzer heißen jeweils `brautomat` (Passwort `brautomat`)
@@ -531,11 +539,8 @@ muss dort also nur noch das Passwort (`brautomat`) eingetragen werden.
   (vertikale Linie) in diesen Graphen; beim InfluxDB-Dashboard fehlt das
   bewusst, da Flux dafür keine einfache, robuste Möglichkeit bietet,
   Wechsel zwischen aufeinanderfolgenden Punkten zu erkennen.
-
-```
-docker compose down             # Container stoppen, Daten bleiben erhalten
-docker compose down --volumes   # Container stoppen und Daten löschen
-```
+  
+  ![Sampe Grafana Dashboard](doc/images/sample-grafana-dashboard.png)
 
 ### Mock-Server für die Entwicklung
 
