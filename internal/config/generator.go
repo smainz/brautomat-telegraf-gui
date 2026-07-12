@@ -67,9 +67,10 @@ func tomlQuote(s string) string {
 // helfen (ein String wäre der falsche TOML-Typ), daher stattdessen eine
 // strikte Whitelist. Alles andere fällt sicher auf "0" zurück.
 func sanitizeQoS(s string) string {
-	switch strings.TrimSpace(s) {
+	trimmed := strings.TrimSpace(s)
+	switch trimmed {
 	case "0", "1", "2":
-		return s
+		return trimmed
 	default:
 		return "0"
 	}
