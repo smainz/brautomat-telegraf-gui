@@ -35,7 +35,7 @@
 # Definition des Inputs: Liest Daten von einem HTTP-Endpunkt.
 [[inputs.http]]
   # Die URL des Brautomat-Gerätes, von der die JSON-Daten gelesen werden.
-  urls = ["{{.DeviceURL}}/telemetry"]
+  urls = ["{{.DeviceURL | toml}}/telemetry"]
 
   # Überschreibt den Standard-Metriknamen ("http").
   # Alle von diesem Input erzeugten Metriken heißen nun "brautomat".

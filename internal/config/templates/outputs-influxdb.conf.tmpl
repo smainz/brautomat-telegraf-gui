@@ -1,5 +1,5 @@
 [[outputs.influxdb_v2]]
-  urls = ["{{.InfluxDB.URL}}"]
-  token = "{{.InfluxDB.Token}}"
-  organization = "{{.InfluxDB.Org}}"
-  bucket = "{{.InfluxDB.Bucket}}"
+  urls = ["{{.InfluxDB.URL | toml}}"]
+  token = "{{.InfluxDB.Token | toml}}"
+  organization = "{{.InfluxDB.Org | toml}}"
+  bucket = "{{.InfluxDB.Bucket | toml}}"

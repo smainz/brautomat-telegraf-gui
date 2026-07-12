@@ -4,20 +4,22 @@
 
 [[outputs.mqtt]]
   # Die Adresse des MQTT-Brokers.
-  servers = ["{{.MQTT.Server}}"]
+  servers = ["{{.MQTT.Server | toml}}"]
 
   # Das MQTT-Topic, auf dem die Daten veröffentlicht werden.
-  topic = "{{.MQTT.Topic}}"
+  topic = "{{.MQTT.Topic | toml}}"
 
-  # Quality of Service Level für die Nachrichten.
-  qos = {{.MQTT.QoS}}
+  # Quality of Service Level für die Nachrichten. Bewusst unquotiert (TOML-
+  # Integer) - "qos" validiert deshalb auf 0/1/2 statt zu escapen, siehe
+  # sanitizeQoS in generator.go.
+  qos = {{.MQTT.QoS | qos}}
 
   # Eindeutige ID für den MQTT-Client.
-  client_id = "{{.MQTT.ClientID}}"
+  client_id = "{{.MQTT.ClientID | toml}}"
 
   # Zugangsdaten für den MQTT-Broker.
-  username = "{{.MQTT.Username}}"
-  password = "{{.MQTT.Password}}"
+  username = "{{.MQTT.Username | toml}}"
+  password = "{{.MQTT.Password | toml}}"
 
   # Wir verwenden wieder das Standard-JSON-Format.
   data_format = "json"

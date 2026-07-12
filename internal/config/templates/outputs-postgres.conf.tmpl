@@ -8,7 +8,7 @@
 
   # Verbindungszeichenfolge (DSN) für die Datenbank.
   # Die Platzhalter werden durch die tatsächlichen Zugangsdaten ersetzt.
-  data_source_name = "postgres://{{.Postgres.User}}:{{.Postgres.Password}}@{{.Postgres.Host}}:{{.Postgres.Port}}/{{.Postgres.Database}}"
+  data_source_name = "postgres://{{.Postgres.User | toml}}:{{.Postgres.Password | toml}}@{{.Postgres.Host | toml}}:{{.Postgres.Port | toml}}/{{.Postgres.Database | toml}}"
 
   # SQL-Template, das ausgeführt wird, wenn die Tabelle nicht existiert.
   # {TABLE} und {COLUMNS} werden von Telegraf ersetzt.

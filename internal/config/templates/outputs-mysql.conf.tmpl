@@ -7,7 +7,7 @@
   driver = "mysql"
 
   # Verbindungszeichenfolge (DSN) für die Datenbank.
-  data_source_name = "{{.MySQL.User}}:{{.MySQL.Password}}@tcp({{.MySQL.Host}}:{{.MySQL.Port}})/{{.MySQL.Database}}"
+  data_source_name = "{{.MySQL.User | toml}}:{{.MySQL.Password | toml}}@tcp({{.MySQL.Host | toml}}:{{.MySQL.Port | toml}})/{{.MySQL.Database | toml}}"
 
   # SQL-Template zum Erstellen der Tabelle, falls sie nicht existiert.
   table_template = "CREATE TABLE {TABLE}({COLUMNS})"

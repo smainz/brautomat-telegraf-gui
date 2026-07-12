@@ -26,9 +26,7 @@ import (
 )
 
 // Version ist die telegraf-Version, die "telegraf herunterladen…" in
-// der GUI installiert. Bei Bedarf hier zentral anheben - im Idealfall
-// synchron mit TELEGRAF_VERSION in .woodpecker/release.yaml halten,
-// auch wenn beide unabhängig voneinander funktionieren.
+// der GUI installiert. Bei Bedarf hier zentral anheben.
 const Version = "1.39.1"
 
 // downloadTimeout begrenzt, wie lange der gesamte Download (inkl.

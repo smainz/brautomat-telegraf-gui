@@ -4,7 +4,7 @@
 
 [[outputs.file]]
   # Pfad zur Zieldatei.
-  files = ["{{.CSV.Path}}"]
+  files = ["{{.CSV.Path | toml}}"]
 
   # Das Zieldatenformat ist CSV.
   data_format = "csv"
