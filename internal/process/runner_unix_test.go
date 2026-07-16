@@ -19,10 +19,31 @@ func TestRunner_StopEscalatesToSIGKILL(t *testing.T) {
 
 	r := NewRunner()
 	done := make(chan error, 1)
-	startWithEnv(t, r, "ignore-term", func(string) {}, func(err error) { done <- err })
+	ready := make(chan struct{}, 1)
+	onLine := func(line string) {
+		if line == "sigterm-handler-ready" {
+			select {
+			case ready <- struct{}{}:
+			default:
+			}
+		}
+	}
+	startWithEnv(t, r, "ignore-term", onLine, func(err error) { done <- err })
 
 	if !r.IsRunning() {
 		t.Fatal("IsRunning() sollte true sein, nachdem der Prozess gestartet wurde")
+	}
+
+	// Warten, bis fakeproc seinen SIGTERM-Handler tatsächlich registriert
+	// hat (siehe signal_unix.go) - sonst Race: würde SIGTERM vorher
+	// ankommen, gilt noch die Standard-Disposition (Terminierung), und
+	// die Eskalation würde gar nicht erst durchlaufen. Auf langsamen/
+	// CPU-gedrosselten CI-Runnern ist die Zeit bis zur Registrierung
+	// unzuverlässig genug, dass ein reines time.Sleep() hier flaky wäre.
+	select {
+	case <-ready:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Timeout: fakeproc hat den SIGTERM-Handler nicht rechtzeitig registriert")
 	}
 
 	stopStart := time.Now()

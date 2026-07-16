@@ -9,7 +9,10 @@
 //   - "sleep"       : wie oben, danach 30s schlafen (zum Testen von Stop())
 //   - "ignore-term" : wie "sleep", ignoriert dabei aber SIGTERM (zum Testen
 //     der SIGTERM->SIGKILL-Eskalation in process_unix.go; unter Windows
-//     verhält es sich wie "sleep", da es dort kein SIGTERM gibt)
+//     verhält es sich wie "sleep", da es dort kein SIGTERM gibt). Gibt unter
+//     unix zusätzlich die Zeile "sigterm-handler-ready" aus, sobald der
+//     SIGTERM-Handler registriert ist (siehe signal_unix.go) - Aufrufer
+//     müssen darauf warten, bevor sie SIGTERM schicken.
 package main
 
 import (
